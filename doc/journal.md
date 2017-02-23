@@ -9,4 +9,10 @@
 
 ## 21.02.2017
 17:15 - 18:00
-- Git setup
+- Git repository setup
+
+## 23.02.2017
+13:00 - 18:00
+- Introduction to data formats and microscopy images
+- CSV Condenser (averages all values for a given instance / cell)
+- First J48 Decision Tree with Weka
