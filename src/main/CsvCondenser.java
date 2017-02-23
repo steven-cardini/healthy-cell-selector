@@ -3,6 +3,7 @@ package main;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import com.opencsv.CSVReader;
@@ -25,11 +26,12 @@ public class CsvCondenser {
     
     // write column titles to output file
     String[] titles = it.next();
-    String[] relevantTitles = new String[featureAmount+1];
+    ArrayList<String> relevantTitles = new ArrayList<>();
     for (int t_i=firstFeatureIndex; t_i < titles.length; t_i++) {
-      relevantTitles[t_i-firstFeatureIndex] = titles[t_i];
+      if (t_i >= firstFeatureIndex+2 && t_i <= firstFeatureIndex+7) continue; // skip fluorescence intensities
+      relevantTitles.add(titles[t_i]);
     }
-    writer.writeNext(relevantTitles); // directly output titles
+    writer.writeNext(relevantTitles.toArray(new String[relevantTitles.size()])); // output titles
     
     // initialize variables
     String[] currentDataset = null, newDataset = null;
@@ -75,10 +77,14 @@ public class CsvCondenser {
       for (int i = 0; i<featureAmount; i++) condensedData[i] = condensedData[i] / size;
       
       // output dataset to new CSV
-      String[] outputData = new String[featureAmount+1];
-      for (int o_i=0; o_i<featureAmount; o_i++) outputData[o_i] = Double.toString(condensedData[o_i]);
-      outputData[outputData.length-1] = currentClass;
-      writer.writeNext(outputData);
+      ArrayList<String> outputData = new ArrayList<>();
+      
+      for (int d_i=0; d_i<featureAmount; d_i++) {
+        if (d_i >= 2 && d_i <= 7) continue; // skip fluorescence intensities
+        outputData.add(Double.toString(condensedData[d_i]));
+      }
+      outputData.add(currentClass);
+      writer.writeNext(outputData.toArray(new String[outputData.size()]));
     }
     
     reader.close();
