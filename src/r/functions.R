@@ -1,25 +1,35 @@
 require(data.table)
 
-addCellIds = function (in.dat, in.id.arg, in.id.group.args) {
+addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
   
-  loc.id.group.vals = dplyr::select(in.dat, dplyr::one_of(in.id.group.args))
+  # add cell IDs to data set
+  loc.dat.temp <- dplyr::select(in.data, dplyr::one_of(in.cell.id.args.vec))
+  loc.dat.temp <- dplyr::distinct(loc.dat.temp)
+  loc.dat.temp[,in.cell.id.arg] <- 1:nrow(loc.dat.temp)
   
-  for (i in 1:nrow(in.dat)) {
-    in.dat[i, (in.id.arg) := paste(loc.id.group.vals[i], collapse = "_")]
-  }
+  out.data <- dplyr::inner_join(loc.dat.temp, in.data, by = in.cell.id.args.vec) # now equals input data set plus new row in.cell.id.arg
+  return (out.data)
+}
+
+
+getCellData = function (in.data, in.cell.id.args.vec, in.cell.metadata.args.vec) {
   
-  return (in.dat)
+  # remove cell id group columns as well as metadata columns
+  out.data <- dplyr::select(in.data, -dplyr::one_of(in.cell.id.args.vec, in.cell.metadata.args.vec)) 
+  
+  return (out.data)
+}
+
+
+getCellMetadata = function (in.data, in.cell.id.arg, in.cell.id.args.vec, in.cell.metadata.args.vec) {
+  
+  out.data <- dplyr::select(in.data, dplyr::one_of(in.cell.id.arg, in.cell.id.args.vec, in.cell.metadata.args.vec))
+  out.data <- dplyr::distinct(out.data)
+  
+  return (out.data)
   
 }
 
-# TODO: add padding
-# dplyr::rename(loc.id.group.vals, )
-# for (col.name in names(loc.id.group.vals)) {
-#  loc.id.group.vals[, (col.name) := sprintf("%03s", loc.id.group.vals[,(col.name)])]
-# }
-
-# loc.ids = tidyr::unite(loc.id.group.vals, (in.id.group.args[1]), (in.id.group.args[2]), sep = "_")
-# in.dat [, (in.id.arg) := loc.ids]
 
 myGgplotScatter = function(in.dat, in.plot.x, in.plot.y, in.plot.group, in.plot.col = NULL) {
   loc.p = ggplot(in.dat, aes_string(x = in.plot.x, 

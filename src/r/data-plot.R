@@ -5,27 +5,33 @@ require(plotly)
 setwd("C:/Users/cst/Documents/Programmierung/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
 
-
-
 ## Global variables
 
-data.id.arg = 'obj_Id'
-data.id.group.args = c('Image_Metadata_Site', 'Well', 'objNuc_TrackObjects_Label')
+cell.id.arg <- 'cell_Id'
+cell.id.args.vec <- c('Image_Metadata_Site', 'Well', 'objNuc_TrackObjects_Label')
+cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
 
-plot.x.arg = 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
-plot.y.arg = 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_MeanIntensity_imErkCorrOrig'
-plot.group.arg = 'objNuc_TrackObjects_Label_uni'
-plot.color.arg = 'mid.in'
-
-
-dat = fread("data/tCoursesSelected_midInCol.csv")
-dat = addCellIds (dat, data.id.arg, data.id.group.args)
+plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
+plot.y.arg <- 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_MeanIntensity_imErkCorrOrig'
+plot.group.arg <- 'objNuc_TrackObjects_Label_uni'
+plot.color.arg <- 'mid.in'
 
 
-#dat[, objNuc_TrackObjects_Label_uni := sprintf("%04d_%04d", Image_Metadata_Site, objNuc_TrackObjects_Label)]
+# import data from file and add cell IDs
 
+dat <- fread("data/tCoursesSelected_midInCol.csv")
+dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
+
+# create data and metadata subsets for further analysis
+
+cells.data <- getCellData(dat, cell.id.args.vec, cell.metadata.args.vec)
+cells.metadata <- getCellMetadata(dat, cell.id.arg, cell.id.args.vec, cell.metadata.args.vec)
+rm(dat) # delete raw data
+
+
+# TODO
+# plot
 
 p1 = myGgplotScatter(dat, plot.x.arg, plot.y.arg, plot.group.arg, in.plot.col = plot.col.arg)
 
 ggplotly(p1)
-
