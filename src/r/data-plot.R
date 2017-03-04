@@ -13,7 +13,7 @@ cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'St
 
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
 plot.y.arg <- 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_MeanIntensity_imErkCorrOrig'
-plot.group.arg <- 'objNuc_TrackObjects_Label_uni'
+plot.group.arg <- cell.id.arg
 plot.color.arg <- 'mid.in'
 
 
@@ -29,9 +29,11 @@ cells.metadata <- getCellMetadata(dat, cell.id.arg, cell.id.args.vec, cell.metad
 rm(dat) # delete raw data
 
 
-# TODO
-# plot
+# plots
 
-p1 = myGgplotScatter(dat, plot.x.arg, plot.y.arg, plot.group.arg, in.plot.col = plot.col.arg)
+# plot cells and add path tracks
+doScatterPlot (cells.data, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 
+# interactive plot
+p1 = makeScatterPlot (cells.data, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 ggplotly(p1)
