@@ -1,4 +1,5 @@
 require(data.table)
+require(dplyr)
 
 addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
   
@@ -27,6 +28,29 @@ getCellMetadata = function (in.data, in.cell.id.arg, in.cell.id.args.vec, in.cel
   out.data <- dplyr::distinct(out.data)
   
   return(out.data)
+}
+
+
+getAverageCellData = function (in.data, in.cell.id.arg, in.cell.class.arg, in.select.args.vec) {
+  
+  # group data by cell id and average other attributes, return only relevant attributes
+  out.data <- in.data %>%
+                group_by_(in.cell.id.arg, in.cell.class.arg) %>%
+                summarise_each(funs(mean)) %>%
+                ungroup() %>%
+                select(one_of(in.cell.class.arg, in.select.args.vec))
+  
+  return(out.data)
+}
+
+getScaledData = function (in.data, in.scale.exlude.args.vec) {
+  
+  temp.index = match(in.scale.exlude.args.vec, names(in.data))
+  out.data <- in.data
+  out.data[,-c(temp.index)] <- scale(out.data[,-c(temp.index)])
+  
+  return(out.data)
+  
 }
 
 
