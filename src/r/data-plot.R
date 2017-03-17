@@ -42,20 +42,24 @@ cells.metadata <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, 
   dplyr::distinct()
 rm(dat) # delete raw data
 
-cells.dt.data <- dplyr::select(cells.data, one_of(cell.id.arg, cell.class.arg), starts_with(cell.feature.prefix))
-cells.dt.avgData <- getAverageCellData(cells.dt.data, cell.id.arg, cell.class.arg)
-cells.dt.avgData.scaled <- getScaledData(cells.dt.avgData, scale.exlude.args.vec)
+# create data sets for decision tree
 
+dt.data.raw <- dplyr::select(cells.data, one_of(cell.id.arg, cell.class.arg), starts_with(cell.feature.prefix))
 
-# Decision tree
+# create average data for each cell
+
+dt.avgData <- getAverageCellData(dt.data.raw, cell.id.arg, cell.class.arg)
+dt.avgData.scaled <- getScaledData(dt.avgData, scale.exlude.args.vec)
+
+# Build decision tree
 # http://data-mining.business-intelligence.uoc.edu/home/j48-decision-tree
 # https://en.wikibooks.org/wiki/Data_Mining_Algorithms_In_R/Packages/RWeka/Weka_classifier_trees
 
-dt <- rpart(mid.in~., data=cells.dt.avgData.scaled)
+dt <- rpart(mid.in~., data=dt.avgData.scaled)
 prp(dt)
 summary(dt)
 
-# dt2 <- J48(mid.in~., data=cells.dt.avgData.scaled)
+# dt2 <- J48(mid.in~., data=dt.avgData.scaled)
 # summary(dt2)
 
 
