@@ -1,15 +1,19 @@
 # Plan for upcoming Weeks
 
-## Week 11
-- Add path features to the currently available cell feature set
-- Build new decision trees, taking into account path features
-- Work on scatter plots, color according to decision trees and compare it to previous plots
-
 ## Week 12
+- Build new decision trees, taking into account path features
+- Evaluate decision trees: color scatter plot according to decision trees and compare it to previous plots, use another data set for verification
+
+## Week 13
 - Finish decision tree approach
 - Start with Naive Bayesian approach
 
 # Project Journal
+
+## 17.03.2017
+08:30 - 10:30
+- Simplified data handling
+- Re-designed data aggregation so that the aggregate data contains more information (variance, min, max)
 
 ## 09.03.2017
 13:00 - 17:30
