@@ -1,7 +1,7 @@
 # Plan for upcoming Weeks
 
 ## Week 12
-- Build new decision trees, taking into account path features
+- Continue working on decision trees
 - Evaluate decision trees: color scatter plot according to decision trees and compare it to previous plots, use another data set for verification
 
 ## Week 13
@@ -11,6 +11,13 @@
 # Project Journal
 
 ## 17.03.2017
+17:00 - 19:00
+- Added new input data
+- Work on decision trees
+
+10:50 - 11:10
+- Project Meeting with Prof. B. Anrig
+
 08:30 - 10:30
 - Simplified data handling
 - Re-designed data aggregation so that the aggregate data contains more information (variance, min, max)
