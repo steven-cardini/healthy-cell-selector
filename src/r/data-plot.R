@@ -24,9 +24,9 @@ plot.y.arg <- 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_
 plot.group.arg <- cell.id.arg
 plot.color.arg <- cell.class.arg
 
-scale.exlude.args.vec <- c('objCell_AreaShape_EulerNumber', 'objCell_Neighbors_FirstClosestObjectNumber_25',
+attrib.scale.exclude <- c('objCell_AreaShape_EulerNumber', 'objCell_Neighbors_FirstClosestObjectNumber_25',
                            'objCell_Neighbors_NumberOfNeighbors_25', 'objCell_Neighbors_PercentTouching_25',
-                           'objCell_Neighbors_PercentTouching_25', 'objCell_Neighbors_SecondClosestObjectNumber_25')
+                           'objCell_Neighbors_SecondClosestObjectNumber_25')
 
 
 
@@ -46,15 +46,12 @@ rm(dat) # delete raw data
 
 # aggregate data (average) for each cell and add variance, min, max and median for some attributes
 
-aggr.attribs.group <- c(cell.id.arg, cell.class.arg)
-aggr.attribs.meanplus <- setdiff(names(dat.features), c(scale.exlude.args.vec, cell.id.arg, cell.class.arg))
-aggr.attribs.meanonly <- scale.exlude.args.vec
+attrib.aggr.group <- c(cell.id.arg, cell.class.arg)
+attrib.aggr.meanplus <- setdiff(names(dat.features), c(attrib.scale.exclude, cell.id.arg, cell.class.arg))
+attrib.aggr.meanonly <- attrib.scale.exclude
 
-dat.features.aggr <- aggregateCellData(dat.features, aggr.attribs.group, aggr.attribs.meanplus, aggr.attribs.meanonly)
-
-# TODO: fix scaling
-dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(scale.exlude.args.vec, cell.id.arg, cell.class.arg))  
-
+dat.features.aggr <- aggregateCellData(dat.features, attrib.aggr.group, attrib.aggr.meanplus, attrib.aggr.meanonly)
+dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.exclude, cell.id.arg, cell.class.arg))  
 
 
 # Build decision tree

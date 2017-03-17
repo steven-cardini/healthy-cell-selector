@@ -28,11 +28,11 @@ aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in
   
 }
 
-scaleCellData = function (in.data, in.scale.exlude.args.vec) {
+scaleCellData = function (in.data, in.attrib.scale.exclude) {
   
-  temp.index <- match(in.scale.exlude.args.vec, names(in.data))
+  loc.attrib.scale.exclude.ind <- grep(paste(in.attrib.scale.exclude, collapse="|"), names(in.data))
   out.data <- in.data
-  out.data[,-c(temp.index)] <- scale(out.data[,-c(temp.index)])
+  out.data[,-c(loc.attrib.scale.exclude.ind)] <- scale(out.data[,-c(loc.attrib.scale.exclude.ind)])
   
   return(out.data)
   
