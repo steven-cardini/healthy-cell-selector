@@ -12,21 +12,23 @@ addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
   return(out.data)
 }
 
-
-getAverageCellData = function (in.data, in.cell.id.arg, in.cell.class.arg) {
+aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly) {
   
-  # group data by cell id and average other attributes, return only relevant attributes
-  out.data <- in.data %>%
-                group_by_(in.cell.id.arg, in.cell.class.arg) %>%
-                summarise_each(funs(mean)) %>%
-                ungroup() %>%
-                select(-get(in.cell.id.arg))
+  loc.dat.1 <- in.data %>%
+    group_by_(.dots = in.attribs.group) %>%
+    summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
+  
+  loc.dat.2 <- in.data %>%
+    group_by_(.dots = in.attribs.group) %>%
+    summarise_at(.cols = in.attribs.meanonly, .funs = c(Mean="mean"))
+  
+  out.data <- full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
   
   return(out.data)
+  
 }
 
-
-getScaledData = function (in.data, in.scale.exlude.args.vec) {
+scaleCellData = function (in.data, in.scale.exlude.args.vec) {
   
   temp.index <- match(in.scale.exlude.args.vec, names(in.data))
   out.data <- in.data

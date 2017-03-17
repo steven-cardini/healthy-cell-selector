@@ -26,13 +26,13 @@ plot.color.arg <- cell.class.arg
 
 scale.exlude.args.vec <- c('objCell_AreaShape_EulerNumber', 'objCell_Neighbors_FirstClosestObjectNumber_25',
                            'objCell_Neighbors_NumberOfNeighbors_25', 'objCell_Neighbors_PercentTouching_25',
-                           'objCell_Neighbors_PercentTouching_25', 'objCell_Neighbors_SecondClosestObjectNumber_25', 'mid.in')
+                           'objCell_Neighbors_PercentTouching_25', 'objCell_Neighbors_SecondClosestObjectNumber_25')
+
 
 
 # import data from file and add cell IDs
 
 dat <- fread("data/tCoursesSelected_midInCol.csv")
-str(dat)
 dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
 
 # create data and metadata subsets for further analysis
@@ -44,12 +44,18 @@ dat.aggr.meta <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, c
 rm(dat) # delete raw data
 
 
-# aggregate data and create average for each cell
+# aggregate data (average) for each cell and add variance, min, max and median for some attributes
 
-dat.aggr.avg <- getAverageCellData(dat.features, cell.id.arg, cell.class.arg)
-dat.aggr.avg.scaled <- getScaledData(dat.aggr.avg, scale.exlude.args.vec)
+aggr.attribs.group <- c(cell.id.arg, cell.class.arg)
+aggr.attribs.meanplus <- setdiff(names(dat.features), c(scale.exlude.args.vec, cell.id.arg, cell.class.arg))
+aggr.attribs.meanonly <- scale.exlude.args.vec
 
-# create 
+dat.features.aggr <- aggregateCellData(dat.features, aggr.attribs.group, aggr.attribs.meanplus, aggr.attribs.meanonly)
+
+# TODO: fix scaling
+dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(scale.exlude.args.vec, cell.id.arg, cell.class.arg))  
+
+
 
 # Build decision tree
 # http://data-mining.business-intelligence.uoc.edu/home/j48-decision-tree
