@@ -14,10 +14,11 @@ source("src/r/functions.R")
 ## Global variables
 
 cell.id.arg <- 'cell_Id'
-cell.id.args.vec <- c('Image_Metadata_Site', 'Well', 'objNuc_TrackObjects_Label')
+cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
 cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
 cell.class.arg <- 'mid.in'
-cell.feature.prefix <- 'objCell_'
+cell.feature.prefix.regex <- 'objCell_*'
+cell.feature.exclude.regex <- 'Intensity'
 
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
 plot.y.arg <- 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_MeanIntensity_imErkCorrOrig'
@@ -32,13 +33,13 @@ attrib.scale.exclude <- c('objCell_AreaShape_EulerNumber', 'objCell_Neighbors_Fi
 
 # import data from file and add cell IDs
 
-dat <- fread("data/tCoursesSelected_midInCol.csv")
+dat <- fread("data/tCoursesSelected_midin_v2.csv")
 dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
 
 # create data and metadata subsets for further analysis
 
-#dat.raw <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
-dat.features <- dplyr::select(dat, one_of(cell.id.arg, cell.class.arg), starts_with(cell.feature.prefix))
+dat.raw <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
+dat.features <- dplyr::select(dat.raw, one_of(cell.id.arg, cell.class.arg), matches(cell.feature.prefix.regex), -contains(cell.feature.exclude.regex))
 dat.aggr.meta <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, cell.id.args.vec, cell.metadata.args.vec)) %>%
   dplyr::distinct()
 rm(dat) # delete raw data
@@ -54,14 +55,29 @@ dat.features.aggr <- aggregateCellData(dat.features, attrib.aggr.group, attrib.a
 dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.exclude, cell.id.arg, cell.class.arg))  
 
 
-# Build decision tree
+# Build decision tree (rpart)# Build decision tree (rpart)
+# http://www.statmethods.net/advstats/cart.html
+# https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
+
+dat.dt.input <- dat.features.aggr.scaled %>%
+  ungroup() %>%
+  select(-get(cell.id.arg))
+
+dat.dt.input$mid.in[dat.dt.input$mid.in==TRUE] <- "healthy"
+dat.dt.input$mid.in[dat.dt.input$mid.in==FALSE] <- "not healthy"
+
+dt <- rpart(mid.in~., data=dat.dt.input)
+dt.pruned <- prune(dt,  dt$cptable[which.min(dt$cptable[,"xerror"]),"CP"])
+plot(dt.pruned)
+text(dt.pruned)
+
+prp(dt.pruned)
+summary(dt.pruned)
+
+
+# Build decision tree (RWeka)
 # http://data-mining.business-intelligence.uoc.edu/home/j48-decision-tree
 # https://en.wikibooks.org/wiki/Data_Mining_Algorithms_In_R/Packages/RWeka/Weka_classifier_trees
-
-dt <- rpart(mid.in~., data=dt.avgData.scaled)
-prp(dt)
-summary(dt)
-
 # dt2 <- J48(mid.in~., data=dt.avgData.scaled)
 # summary(dt2)
 
@@ -69,8 +85,8 @@ summary(dt)
 # plots
 
 # plot cells and add path tracks
-doScatterPlot (cells.data, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
+doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 
 # interactive plot
-p1 = makeScatterPlot (cells.data, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
+p1 = makeScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 ggplotly(p1)
