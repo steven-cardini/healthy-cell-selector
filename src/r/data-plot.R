@@ -67,11 +67,11 @@ dat.dt.input$mid.in[dat.dt.input$mid.in==TRUE] <- "healthy"
 dat.dt.input$mid.in[dat.dt.input$mid.in==FALSE] <- "not healthy"
 
 dt <- rpart(mid.in~., data=dat.dt.input)
-dt.pruned <- prune(dt,  dt$cptable[which.min(dt$cptable[,"xerror"]),"CP"])
-plot(dt.pruned)
-text(dt.pruned)
+prp(dt, extra = 2, under = TRUE, varlen = 0)
+summary(dt)
 
-prp(dt.pruned)
+dt.pruned <- prune(dt,  dt$cptable[which.min(dt$cptable[,"xerror"]),"CP"])
+prp(dt, extra = 2, under = TRUE, varlen = 0)
 summary(dt.pruned)
 
 
