@@ -37,19 +37,19 @@ dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
 
 # create data and metadata subsets for further analysis
 
-cells.data <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
-cells.metadata <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, cell.id.args.vec, cell.metadata.args.vec)) %>%
+#dat.raw <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
+dat.features <- dplyr::select(dat, one_of(cell.id.arg, cell.class.arg), starts_with(cell.feature.prefix))
+dat.aggr.meta <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, cell.id.args.vec, cell.metadata.args.vec)) %>%
   dplyr::distinct()
 rm(dat) # delete raw data
 
-# create data sets for decision tree
 
-dt.data.raw <- dplyr::select(cells.data, one_of(cell.id.arg, cell.class.arg), starts_with(cell.feature.prefix))
+# aggregate data and create average for each cell
 
-# create average data for each cell
+dat.aggr.avg <- getAverageCellData(dat.features, cell.id.arg, cell.class.arg)
+dat.aggr.avg.scaled <- getScaledData(dat.aggr.avg, scale.exlude.args.vec)
 
-dt.avgData <- getAverageCellData(dt.data.raw, cell.id.arg, cell.class.arg)
-dt.avgData.scaled <- getScaledData(dt.avgData, scale.exlude.args.vec)
+# create 
 
 # Build decision tree
 # http://data-mining.business-intelligence.uoc.edu/home/j48-decision-tree
