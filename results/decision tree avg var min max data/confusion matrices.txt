@@ -1,0 +1,10 @@
+20170323_dt_rpart_gini
+pred          healthy not healthy
+  healthy         265          14
+  not healthy       6          18
+
+20170323_dt_rpart_information
+pred          healthy not healthy
+  healthy         271          23
+  not healthy       0           9
+

@@ -8,7 +8,7 @@ require(RWeka)
 require(ggplot2)
 require(plotly)
 
-setwd("C:/Users/cst/Documents/Programmierung/eclipse-workspaces/java/healthy-cell-selector")
+setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
 
 ## Global variables
@@ -21,7 +21,7 @@ cell.feature.prefix.regex <- 'objCell_*'
 cell.feature.exclude.regex <- 'Intensity'
 
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
-plot.y.arg <- 'objNuc_Intensity_MeanIntensity_imErkCorrOrig + objCyto_Intensity_MeanIntensity_imErkCorrOrig'
+plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
 plot.group.arg <- cell.id.arg
 plot.color.arg <- cell.class.arg
 
@@ -59,20 +59,48 @@ dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.excl
 # http://www.statmethods.net/advstats/cart.html
 # https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
 
-dat.dt.input <- dat.features.aggr.scaled %>%
-  ungroup() %>%
-  select(-get(cell.id.arg))
 
+dat.dt.input <- dat.features.aggr.scaled
 dat.dt.input$mid.in[dat.dt.input$mid.in==TRUE] <- "healthy"
 dat.dt.input$mid.in[dat.dt.input$mid.in==FALSE] <- "not healthy"
 
-dt <- rpart(mid.in~., data=dat.dt.input)
-prp(dt, extra = 2, under = TRUE, varlen = 0)
-summary(dt)
+dat.dt.predict <- dat.dt.input %>%
+  ungroup() %>%
+  select(-get(cell.class.arg))
 
-dt.pruned <- prune(dt,  dt$cptable[which.min(dt$cptable[,"xerror"]),"CP"])
-prp(dt, extra = 2, under = TRUE, varlen = 0)
-summary(dt.pruned)
+
+# Build the decision tree according to Gini split method
+
+dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
+prp(dt.gini, extra = 2, under = TRUE, varlen = 0)
+summary(dt.gini)
+
+pred.gini <- predict(dt.gini, type="class")
+sprintf("Confusion Matrix for dt.gini")
+table(pred.gini, dat.dt.input$mid.in)
+
+predicted <- predict(dt.gini, dat.dt.predict)
+predicted <- (predicted[,1] > 0.5)
+
+dat.raw.predicted.gini <- data.table(dat.raw)
+dat.raw.predicted.gini[, (cell.class.arg) := predicted[get(cell.id.arg)]]
+
+
+# Build the decision tree according to Information split method
+
+dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"))
+prp(dt.info, extra = 2, under = TRUE, varlen = 0)
+summary(dt.info)
+
+pred.info <- predict(dt.info, type="class")
+sprintf("Confusion Matrix for dt.info")
+table(pred.info, dat.dt.input$mid.in)
+
+predicted <- predict(dt.info, dat.dt.predict)
+predicted <- (predicted[,1] > 0.5)
+
+dat.raw.predicted.info <- data.table(dat.raw)
+dat.raw.predicted.info[, (cell.class.arg) := predicted[get(cell.id.arg)]]
 
 
 # Build decision tree (RWeka)
@@ -82,11 +110,12 @@ summary(dt.pruned)
 # summary(dt2)
 
 
-# plots
+# Plots
 
-# plot cells and add path tracks
+# plot original data set
 doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
+# plot prediction accorind to decision tree (Gini)
+doScatterPlot (dat.raw.predicted.gini, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
+# plot prediction accorind to decision tree (information)
+doScatterPlot (dat.raw.predicted.info, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 
-# interactive plot
-p1 = makeScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
-ggplotly(p1)
