@@ -1,14 +1,19 @@
 # Plan for upcoming Weeks
 
-## Week 12
-- Continue working on decision trees
-- Evaluate decision trees: color scatter plot according to decision trees and compare it to previous plots, use another data set for verification
-
 ## Week 13
-- Finish decision tree approach
-- Start with Naive Bayesian approach
+- Evaluate decision trees based on other data sets
+- Analyze whether to continue with Naive Bayesian, logistic regression (lm()), or other approach
+
+## Week 14
+- Dig into new approach (Naive Bayesian, ...)
 
 # Project Journal
+
+## 23.03.2017
+14:00 - 17:30
+- Modified rpart decision trees to split based on Gini vs. Information
+- Created datasets with predicted classes according to decision trees
+- Added confusion matrices for decision trees and plots for data sets according to decision trees
 
 ## 17.03.2017
 17:00 - 19:00
