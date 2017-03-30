@@ -1,13 +1,18 @@
 # Plan for upcoming Weeks
 
-## Week 13
-- Evaluate decision trees based on other data sets
-- Analyze whether to continue with Naive Bayesian, logistic regression (lm()), or other approach
-
 ## Week 14
-- Dig into new approach (Naive Bayesian, ...)
+- Add other path variables to data sets and use only values from time point 10 on 
+- Re-evaluate decision tree as well as Naive Bayesian with the new path variables
+
+## Week 15
+- Continue with another approach (logistic regression?)
 
 # Project Journal
+
+## 30.03.2017
+13:00 - 18:00
+- Implemented a first Naive Bayesian classifier (package klaR)
+- Applied Gini decision tree as well as Naive Bayesian classifier to 3 other data sets for evaluation 
 
 ## 23.03.2017
 14:00 - 17:30
