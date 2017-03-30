@@ -1,4 +1,0 @@
-20170330_plot_dt_gini
-dat.dt.result FALSE TRUE
-        FALSE     5    4
-        TRUE     14   71

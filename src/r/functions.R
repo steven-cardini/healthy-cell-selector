@@ -12,17 +12,21 @@ addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
   return(out.data)
 }
 
-aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly) {
+aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly = NULL) {
   
   loc.dat.1 <- in.data %>%
-    group_by_(.dots = in.attribs.group) %>%
-    summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
+    dplyr::group_by_(.dots = in.attribs.group) %>%
+    dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
   
-  loc.dat.2 <- in.data %>%
-    group_by_(.dots = in.attribs.group) %>%
-    summarise_at(.cols = in.attribs.meanonly, .funs = c(Mean="mean"))
-  
-  out.data <- full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
+  if(is.null(in.attribs.meanonly)) {
+    out.data <- loc.dat.1
+  } else {
+    loc.dat.2 <- in.data %>%
+      dplyr::group_by_(.dots = in.attribs.group) %>%
+      dplyr::summarise_at(.cols = in.attribs.meanonly, .funs = c(Mean="mean"))
+    
+    out.data <- full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
+  }
   
   return(out.data)
   

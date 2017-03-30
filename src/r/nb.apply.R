@@ -1,6 +1,3 @@
-#require(e1071)
-require(klaR)
-
 require(data.table)
 require(dplyr)
 require(ggplot2)
@@ -12,14 +9,14 @@ source("src/r/functions.R")
 
 ## Global variables
 
-file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2.csv'
+file.path <- 'data/20170228_test_multipulses_30min_break.csv'
 
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
 cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
 cell.class.arg <- 'mid.in'
 cell.feature.prefix.regex <- 'objCell_*'
-cell.feature.exclude.regex <- '.*(Intensity|Euler|Neighbors)+.*'
+cell.feature.exclude.regex <- '.*(Intensity|Euler)+.*'
 
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
 plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
@@ -47,37 +44,30 @@ rm(dat) # delete raw data
 
 attrib.aggr.group <- c(cell.id.arg, cell.class.arg)
 attrib.aggr.meanplus <- setdiff(names(dat.features), c(attrib.scale.exclude, cell.id.arg, cell.class.arg))
+attrib.aggr.meanonly <- setdiff(attrib.scale.exclude, "objCell_AreaShape_EulerNumber_Mean")
 
 dat.features.aggr <- aggregateCellData(dat.features, attrib.aggr.group, attrib.aggr.meanplus)
 dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.exclude, cell.id.arg, cell.class.arg))
 
-# prepare training set data for Naive Bayesian classifier
-
-dat.nb.training <- dat.features.aggr.scaled
-dat.nb.training$mid.in[dat.nb.training$mid.in==TRUE] <- "healthy"
-dat.nb.training$mid.in[dat.nb.training$mid.in==FALSE] <- "not healthy"
-
-dat.nb.prediction <- dat.nb.training %>%
-  ungroup() %>%
+# remove class from data
+dat.nb.input <- dat.features.aggr.scaled %>%
+  dplyr::ungroup() %>%
   dplyr::select(-get(cell.class.arg))
 
 
-# use Naive Bayesian classifier
-# https://en.wikibooks.org/wiki/Data_Mining_Algorithms_In_R/Classification/Na%C3%AFve_Bayes
+# apply Naive Bayesian classifier
 
-nb.classifier <- NaiveBayes(as.factor(mid.in) ~ ., data = dat.nb.training)
-nb.predicted <- predict(nb.classifier, dat.nb.training[,-2])
-nb.predicted <- (nb.predicted$posterior[,1] > 0.5)
+dat.nb.result <- predict(nb.classifier, dat.nb.input)
+dat.nb.result <- (dat.nb.result$posterior[,1] > 0.5)
 
 dat.raw.predicted.nb <- data.table(dat.raw)
-dat.raw.predicted.nb[, (cell.class.arg) := nb.predicted[get(cell.id.arg)]]
+dat.raw.predicted.nb[, (cell.class.arg) := dat.nb.result[get(cell.id.arg)]]
 
-
-# Plots
+# build confusion matrix
+table(dat.nb.result, dat.features.aggr.scaled$mid.in)
 
 # plot original data set
 doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
-# plot prediction accorind to Naive Bayesian approach (nb)
+
+# plot result according to decision tree
 doScatterPlot (dat.raw.predicted.nb, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
-
-
