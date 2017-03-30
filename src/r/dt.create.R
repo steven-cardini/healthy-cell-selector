@@ -1,45 +1,44 @@
 require(data.table)
 require(dplyr)
+require(ggplot2)
+require(plotly)
 
 require(rpart)
 require(rpart.plot)
 require(RWeka)
-
-require(ggplot2)
-require(plotly)
 
 setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
 
 ## Global variables
 
+file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2.csv'
+
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
 cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
 cell.class.arg <- 'mid.in'
 cell.feature.prefix.regex <- 'objCell_*'
-cell.feature.exclude.regex <- 'Intensity'
+cell.feature.exclude.regex <- '.*(Intensity|Neighbors)+.*'
 
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
 plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
 plot.group.arg <- cell.id.arg
 plot.color.arg <- cell.class.arg
 
-attrib.scale.exclude <- c('objCell_AreaShape_EulerNumber', 'objCell_Neighbors_FirstClosestObjectNumber_25',
-                           'objCell_Neighbors_NumberOfNeighbors_25', 'objCell_Neighbors_PercentTouching_25',
-                           'objCell_Neighbors_SecondClosestObjectNumber_25')
+attrib.scale.exclude <- c('objCell_AreaShape_EulerNumber')
 
 
 
 # import data from file and add cell IDs
 
-dat <- fread("data/tCoursesSelected_midin_v2.csv")
+dat <- fread(file.path)
 dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
 
 # create data and metadata subsets for further analysis
 
 dat.raw <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
-dat.features <- dplyr::select(dat.raw, one_of(cell.id.arg, cell.class.arg), matches(cell.feature.prefix.regex), -contains(cell.feature.exclude.regex))
+dat.features <- dplyr::select(dat.raw, one_of(cell.id.arg, cell.class.arg), matches(cell.feature.prefix.regex), -matches(cell.feature.exclude.regex))
 dat.aggr.meta <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, cell.id.args.vec, cell.metadata.args.vec)) %>%
   dplyr::distinct()
 rm(dat) # delete raw data
@@ -65,8 +64,8 @@ dat.dt.input$mid.in[dat.dt.input$mid.in==TRUE] <- "healthy"
 dat.dt.input$mid.in[dat.dt.input$mid.in==FALSE] <- "not healthy"
 
 dat.dt.predict <- dat.dt.input %>%
-  ungroup() %>%
-  select(-get(cell.class.arg))
+  dplyr::ungroup() %>%
+  dplyr::select(-get(cell.class.arg))
 
 
 # Build the decision tree according to Gini split method
