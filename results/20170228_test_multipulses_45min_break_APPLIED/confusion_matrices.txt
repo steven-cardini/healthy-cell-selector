@@ -1,0 +1,9 @@
+20170330_plot_dt_gini
+dat.dt.result FALSE TRUE
+        FALSE     2    6
+        TRUE     24   78
+
+20170330_plot_nb_klaR
+dat.nb.result FALSE TRUE
+        FALSE     6    6
+        TRUE     20   78

@@ -9,7 +9,7 @@ source("src/r/functions.R")
 
 ## Global variables
 
-file.path <- 'data/20170228_test_multipulses_30min_break.csv'
+file.path <- 'data/20170228_test_multipulses_60min_break.csv'
 
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
@@ -69,5 +69,5 @@ table(dat.nb.result, dat.features.aggr.scaled$mid.in)
 # plot original data set
 doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 
-# plot result according to decision tree
+# plot result according to Naive Bayesian classifier
 doScatterPlot (dat.raw.predicted.nb, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
