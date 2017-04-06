@@ -72,6 +72,9 @@ nb.predicted <- (nb.predicted$posterior[,1] > 0.5)
 dat.raw.predicted.nb <- data.table(dat.raw)
 dat.raw.predicted.nb[, (cell.class.arg) := nb.predicted[get(cell.id.arg)]]
 
+# build confusion matrix
+table(nb.predicted, dat.features.aggr.scaled$mid.in)
+
 
 # Plots
 

@@ -1,0 +1,7 @@
+training input data: 20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2
+
+dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"), control=rpart.control(cp = 0.01, minsplit = 8))
+
+dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"), control=rpart.control(cp = 0.01, minsplit = 8))
+
+nb.classifier <- NaiveBayes(as.factor(mid.in) ~ ., data = dat.nb.training)

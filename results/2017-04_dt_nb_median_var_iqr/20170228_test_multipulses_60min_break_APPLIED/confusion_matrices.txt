@@ -1,0 +1,14 @@
+20170406_dt_rpart_gini
+dat.dt.result.gini FALSE TRUE
+             FALSE     1    8
+             TRUE     12   62
+
+20170406_dt_rpart_info
+dat.dt.result.info FALSE TRUE
+             FALSE     5    9
+             TRUE      8   61
+
+20170406_nb_klaR
+dat.nb.result FALSE TRUE
+        FALSE     6   10
+        TRUE      7   60

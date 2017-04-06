@@ -8,7 +8,7 @@ source("src/r/functions.R")
 
 ## Global variables
 
-file.path <- 'data/20170228_test_multipulses_60min_break.csv'
+file.path <- 'data/20170228_test_multipulses_45min_break.csv'
 
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
@@ -54,18 +54,36 @@ dat.dt.input <- dat.features.aggr.scaled %>%
   dplyr::ungroup() %>%
   dplyr::select(-get(cell.class.arg))
 
-dat.dt.result <- predict(dt.gini, dat.dt.input)
-dat.dt.result <- (dat.dt.result[,1] > 0.5)
+############
+# evaluate GINI
+dat.dt.result.gini <- predict(dt.gini, dat.dt.input)
+dat.dt.result.gini <- (dat.dt.result.gini[,1] > 0.5)
 
 dat.raw.predicted.gini <- data.table(dat.raw)
-dat.raw.predicted.gini[, (cell.class.arg) := dat.dt.result[get(cell.id.arg)]]
+dat.raw.predicted.gini[, (cell.class.arg) := dat.dt.result.gini[get(cell.id.arg)]]
 
 # build confusion matrix
-table(dat.dt.result, dat.features.aggr.scaled$mid.in)
+table(dat.dt.result.gini, dat.features.aggr.scaled$mid.in)
 
+############
+# evaluate INFO
+dat.dt.result.info <- predict(dt.info, dat.dt.input)
+dat.dt.result.info <- (dat.dt.result.info[,1] > 0.5)
+
+dat.raw.predicted.info <- data.table(dat.raw)
+dat.raw.predicted.info[, (cell.class.arg) := dat.dt.result.info[get(cell.id.arg)]]
+
+# build confusion matrix
+table(dat.dt.result.info, dat.features.aggr.scaled$mid.in)
+
+
+############
 
 # plot original data set
 doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 
-# plot result according to decision tree
+# plot result according to Gini decision tree
 doScatterPlot (dat.raw.predicted.gini, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
+
+# plot result according to Info decision tree
+doScatterPlot (dat.raw.predicted.info, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)

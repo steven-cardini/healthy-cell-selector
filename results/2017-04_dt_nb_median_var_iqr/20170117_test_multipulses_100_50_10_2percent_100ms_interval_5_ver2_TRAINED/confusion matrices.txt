@@ -1,0 +1,14 @@
+20170406_dt_rpart_gini
+pred.gini     healthy not healthy
+  healthy         266           5
+  not healthy       5          27
+
+20170406_dt_rpart_information
+pred.info     healthy not healthy
+  healthy         263           0
+  not healthy       8          32
+
+20170406_nb_klaR
+nb.predicted FALSE TRUE
+       FALSE    13   26
+       TRUE     19  245

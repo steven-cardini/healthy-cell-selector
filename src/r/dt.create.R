@@ -12,7 +12,7 @@ source("src/r/functions.R")
 
 ## Global variables
 
-file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2.csv'
+file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
 
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
@@ -70,7 +70,7 @@ dat.dt.predict <- dat.dt.input %>%
 
 # Build the decision tree according to Gini split method
 
-dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
+dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"), control=rpart.control(cp = 0.01, minsplit = 8))
 prp(dt.gini, extra = 2, under = TRUE, varlen = 0)
 summary(dt.gini)
 
@@ -87,7 +87,7 @@ dat.raw.predicted.gini[, (cell.class.arg) := predicted[get(cell.id.arg)]]
 
 # Build the decision tree according to Information split method
 
-dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"))
+dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"), control=rpart.control(cp = 0.01, minsplit = 8))
 prp(dt.info, extra = 2, under = TRUE, varlen = 0)
 summary(dt.info)
 
@@ -113,8 +113,8 @@ dat.raw.predicted.info[, (cell.class.arg) := predicted[get(cell.id.arg)]]
 
 # plot original data set
 doScatterPlot (dat.raw, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
-# plot prediction accorind to decision tree (Gini)
+# plot prediction according to decision tree (Gini)
 doScatterPlot (dat.raw.predicted.gini, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
-# plot prediction accorind to decision tree (information)
+# plot prediction according to decision tree (information)
 doScatterPlot (dat.raw.predicted.info, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)
 

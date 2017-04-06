@@ -16,7 +16,8 @@ aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in
   
   loc.dat.1 <- in.data %>%
     dplyr::group_by_(.dots = in.attribs.group) %>%
-    dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
+    dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(median="median", var="var", IQR="IQR"))
+    #dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
   
   if(is.null(in.attribs.meanonly)) {
     out.data <- loc.dat.1
@@ -25,7 +26,7 @@ aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in
       dplyr::group_by_(.dots = in.attribs.group) %>%
       dplyr::summarise_at(.cols = in.attribs.meanonly, .funs = c(Mean="mean"))
     
-    out.data <- full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
+    out.data <- dplyr::full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
   }
   
   return(out.data)
