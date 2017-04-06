@@ -3,7 +3,7 @@ dat.dt.result FALSE TRUE
         FALSE     7    5
         TRUE     12   70
 
-20170406_dt_rpart_information
+20170406_dt_rpart_info
 dat.dt.result.info FALSE TRUE
              FALSE     5   12
              TRUE     14   63

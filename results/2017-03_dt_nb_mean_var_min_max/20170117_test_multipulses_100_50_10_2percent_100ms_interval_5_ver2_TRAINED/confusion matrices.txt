@@ -3,8 +3,13 @@ pred          healthy not healthy
   healthy         265          14
   not healthy       6          18
 
-20170323_dt_rpart_information
+20170323_dt_rpart_info
 pred          healthy not healthy
   healthy         271          23
   not healthy       0           9
+
+20170330_nb_klaR
+nb.predicted FALSE TRUE
+       FALSE    17   29
+       TRUE     15  242
 

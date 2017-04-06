@@ -8,7 +8,7 @@ source("src/r/functions.R")
 
 ## Global variables
 
-file.path <- 'data/20170228_test_multipulses_45min_break.csv'
+file.path <- 'data/20170228_test_multipulses_60min_break.csv'
 
 cell.id.arg <- 'cell_Id'
 cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')

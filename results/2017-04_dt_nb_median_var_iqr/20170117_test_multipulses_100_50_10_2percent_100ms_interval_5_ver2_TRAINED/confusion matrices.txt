@@ -3,7 +3,7 @@ pred.gini     healthy not healthy
   healthy         266           5
   not healthy       5          27
 
-20170406_dt_rpart_information
+20170406_dt_rpart_info
 pred.info     healthy not healthy
   healthy         263           0
   not healthy       8          32

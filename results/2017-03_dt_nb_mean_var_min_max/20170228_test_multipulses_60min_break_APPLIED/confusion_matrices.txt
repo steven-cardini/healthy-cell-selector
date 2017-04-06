@@ -1,7 +1,12 @@
-20170330_plot_dt_gini
+20170330_dt_rpart_gini
 dat.dt.result FALSE TRUE
         FALSE     2    1
         TRUE     11   69
+
+20170330_dt_rpart_info
+dat.dt.result.info FALSE TRUE
+             FALSE     0    2
+             TRUE     13   68
 
 20170330_plot_nb_klaR
 dat.nb.result FALSE TRUE

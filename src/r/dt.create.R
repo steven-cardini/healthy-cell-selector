@@ -70,6 +70,7 @@ dat.dt.predict <- dat.dt.input %>%
 
 # Build the decision tree according to Gini split method
 
+#dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
 dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"), control=rpart.control(cp = 0.01, minsplit = 8))
 prp(dt.gini, extra = 2, under = TRUE, varlen = 0)
 summary(dt.gini)
@@ -87,6 +88,7 @@ dat.raw.predicted.gini[, (cell.class.arg) := predicted[get(cell.id.arg)]]
 
 # Build the decision tree according to Information split method
 
+#dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"))
 dt.info <- rpart(mid.in~., data=dat.dt.input, parms=list(split="information"), control=rpart.control(cp = 0.01, minsplit = 8))
 prp(dt.info, extra = 2, under = TRUE, varlen = 0)
 summary(dt.info)
