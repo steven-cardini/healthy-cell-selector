@@ -1,13 +1,25 @@
 # Plan for upcoming Weeks
 
-## Week 14
-- Add other path variables to data sets and use only values from time point 10 on 
-- Re-evaluate decision tree as well as Naive Bayesian with the new path variables
-
 ## Week 15
-- Continue with another approach (logistic regression?)
+- Continue work to add a measure for difference between time points; use only values from time point 10 on (?)
+- Try another approach based on statistics (classify cells outside a defined quantile range as unhealthy)
+
+## Week 16
+- Continue work from week 15
+- Maybe continue with another approach (Support Vector Machines?)
 
 # Project Journal
+
+## 06.04.2017
+13:00 - 18:15
+- Used more refined criteria for decision trees and other aggregate functions (IQR) for attributes
+- Added evaluation / diagnostics (confusion matrix overview)
+- Discussion with M. Dobrzynski about next steps
+- Started work to add a measure for difference between time points
+
+## 31.03.2017
+16:00 - 16:20
+- Project Meeting with Prof. B. Anrig
 
 ## 30.03.2017
 13:00 - 18:00
