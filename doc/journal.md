@@ -1,7 +1,7 @@
 # Plan for upcoming Weeks
 
 ## Week 15
-- Continue work to add a measure for difference between time points; use only values from time point 10 on (?)
+- Evaluate decision tree / naive bayesian with new features (time point differences); use only values from time point 10 on (?)
 - Try another approach based on statistics (classify cells outside a defined quantile range as unhealthy)
 
 ## Week 16
@@ -9,6 +9,16 @@
 - Maybe continue with another approach (Support Vector Machines?)
 
 # Project Journal
+
+## 14.04.2017
+10:00 - 14:00
+- Some refactoring and simplification of the code (added new script for data import and preparation)
+- Label outliers as false (if any feature is below or above a certain quantile)
+
+## 13.04.2017
+13:00 - 18:00
+- Added function to calculate differences between time points and aggregate the data
+- Started work to label outliers as FALSE (even if they were labeled TRUE before)
 
 ## 06.04.2017
 13:00 - 18:15
