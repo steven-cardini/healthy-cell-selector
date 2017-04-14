@@ -1,14 +1,16 @@
-require(data.table)
-require(dplyr)
+library(dplyr)
+library(data.table) 
 
-addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
+addCellIds = function (in.data, in.cellid.arg, in.id.args.vec) {
   
   # add cell IDs to data set
-  loc.dat.temp <- dplyr::select(in.data, dplyr::one_of(in.cell.id.args.vec)) %>%
+  loc.data <- in.data %>%
+    dplyr::select(dplyr::one_of(in.id.args.vec)) %>%
     dplyr::distinct()
-  loc.dat.temp[,in.cell.id.arg] <- 1:nrow(loc.dat.temp)
+  loc.data[,in.cellid.arg] <- 1:nrow(loc.data)
   
-  out.data <- dplyr::inner_join(loc.dat.temp, in.data, by = in.cell.id.args.vec) # now equals input data set plus new row in.cell.id.arg
+  out.data <- dplyr::inner_join(loc.data, in.data, by = in.id.args.vec) # now equals input data set plus new row in.cell.id.arg
+  
   return(out.data)
 }
 
@@ -16,21 +18,49 @@ addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
 cv = function (x) {
   x <- x[!is.na(x)] # remove NA values
   
-  res <- sd(x) / mean(x)
-  return(res)
+  if (mean(x)==0 | sd(x)/mean(x) > .Machine$integer.max)
+    return (.Machine$integer.max)
+
+  return(sd(x) / mean(x))
 }
 
-# TODO: add time points and sort by those
 # INPUT: data set consisting of grouping attributes (ID, class) + several features across the columns
-addDifferencesAndAggregate = function (in.data, in.attribs.group) {
+addDifferencesAndAggregate = function (in.data, in.grouping.args) {
   loc.data <- in.data %>%
-    group_by_(.dots = in.attribs.group) %>%
+    group_by_(.dots = in.grouping.args) %>%
     mutate_each(funs(diffs = c(NA, diff(.)))) %>%
     na.omit() %>%
     summarise_each(funs(col.cv = cv(.), col.mn = mean(.)))
+  
+  return(loc.data)
 }
 
 
+labelOutliers = function (in.data, in.class.arg, in.grouping.args) {
+  
+  loc.data <- in.data
+  features <- setdiff(names(loc.data), in.grouping.args)
+  setDT(loc.data)[,  (in.class.arg) := Reduce(`&`, lapply(.SD, function(x) x < quantile(x, 0.99) & 
+                                             x > quantile(x, .01))), .SDcols = features]
+  
+  return(loc.data)
+  
+}
+
+
+scaleCellData = function (in.data, in.attrib.scale.exclude) {
+  
+  loc.attrib.scale.exclude.ind <- grep(paste(in.attrib.scale.exclude, collapse="|"), names(in.data))
+  out.data <- in.data
+  out.data[,-c(loc.attrib.scale.exclude.ind)] <- scale(out.data[,-c(loc.attrib.scale.exclude.ind)])
+  
+  return(out.data)
+  
+}
+
+
+
+# TODO: probably obsolete function
 aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly = NULL) {
   
   loc.dat.1 <- in.data %>%
@@ -52,15 +82,6 @@ aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in
   
 }
 
-scaleCellData = function (in.data, in.attrib.scale.exclude) {
-  
-  loc.attrib.scale.exclude.ind <- grep(paste(in.attrib.scale.exclude, collapse="|"), names(in.data))
-  out.data <- in.data
-  out.data[,-c(loc.attrib.scale.exclude.ind)] <- scale(out.data[,-c(loc.attrib.scale.exclude.ind)])
-  
-  return(out.data)
-  
-}
 
 
 doScatterPlot = function (in.data, in.plot.x.arg, in.plot.y.arg, in.plot.group, in.plot.color = 1) {

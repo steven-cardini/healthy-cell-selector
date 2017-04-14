@@ -4,7 +4,8 @@
 # Spring 2017
 ##############################################
 
-require(dplyr)
+library(dplyr)
+library(data.table)
 setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
 
@@ -67,10 +68,9 @@ rm(dat) # delete raw data
 
 ##############################################
 # Add differences between time points as new features and aggregate features for each cell (coefficient of variation, mean)
+dat.features.aggr.1 <- addDifferencesAndAggregate(dat.features %>% dplyr::select(-dplyr::one_of(dat.timepoint.arg)), dat.feature.grouping.args)
 
-dat.features.aggr <- addDifferencesAndAggregate(dat.features %>% dplyr::select(-dplyr::one_of(dat.timepoint.arg)), dat.feature.grouping.args)
-
-# TODO: label cells FALSE if any of the features is an outlier (< 0.1 quantile OR > 0.9 quantile)
-
+# Label cells FALSE if any of the features is an outlier (< 0.01 quantile OR > 0.99 quantile)
+dat.features.aggr.2 <- labelOutliers(dat.features.aggr, dat.class.arg, dat.feature.grouping.args)
 
 # TODO: scale the features
