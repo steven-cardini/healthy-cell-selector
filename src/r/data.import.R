@@ -1,0 +1,76 @@
+##############################################
+# Script to import data from time courses and prepare it for further analysis
+# Author: Steven Cardini
+# Spring 2017
+##############################################
+
+require(dplyr)
+setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
+source("src/r/functions.R")
+
+
+##############################################
+# Global variables
+
+file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
+
+dat.cellid.arg <- 'cell_Id' # custom name for the new cell id attribute
+dat.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
+dat.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
+dat.timepoint.arg <- 'RealTime'
+dat.class.arg <- 'mid.in.man'
+
+dat.feature.grouping.args <- c(dat.cellid.arg, dat.class.arg)
+
+cell.feature.include.regex <- 'objCell_AreaShape*'
+cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
+
+
+###############################################
+# Import data from file and add cell IDs
+
+dat <- fread(file.path)
+dat <- addCellIds(dat, dat.cellid.arg, dat.id.args.vec)
+
+
+###############################################
+# Perform some tests on imported data
+
+## test that all cells contain the same number of time points and save the number of timepoints
+test <- table(dat[,dat.cellid.arg])
+stopifnot(var(test) == 0)
+stopifnot(mean(test) %% 1 == 0)
+timepointsPerCell <- as.integer(mean(test))
+rm(test)
+
+## test that there is the identical classification (TRUE | FALSE) for all time points of a cell
+numberOfCells <- max(dat[,dat.cellid.arg])
+test <- dat %>% dplyr::select(one_of(c(dat.cellid.arg, dat.class.arg))) %>% group_by(.) %>% unique()
+stopifnot(nrow(test) == numberOfCells)
+rm(test)
+
+
+##############################################
+# Create data and metadata subsets for further analysis
+
+dat.features <- dat %>% 
+  dplyr::select(one_of(dat.cellid.arg, dat.timepoint.arg, dat.class.arg), matches(cell.feature.include.regex), -matches(cell.feature.exclude.regex)) %>% 
+  dplyr::arrange_(.dots = c(dat.cellid.arg, dat.timepoint.arg))
+
+dat.meta <- dat %>%
+  dplyr::select(dplyr::one_of(dat.cellid.arg, dat.class.arg, dat.id.args.vec, dat.metadata.args.vec)) %>%
+  dplyr::distinct() %>%
+  dplyr::arrange_(.dots = dat.cellid.arg)
+
+rm(dat) # delete raw data
+
+
+##############################################
+# Add differences between time points as new features and aggregate features for each cell (coefficient of variation, mean)
+
+dat.features.aggr <- addDifferencesAndAggregate(dat.features %>% dplyr::select(-dplyr::one_of(dat.timepoint.arg)), dat.feature.grouping.args)
+
+# TODO: label cells FALSE if any of the features is an outlier (< 0.1 quantile OR > 0.9 quantile)
+
+
+# TODO: scale the features
