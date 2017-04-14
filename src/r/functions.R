@@ -12,6 +12,25 @@ addCellIds = function (in.data, in.cell.id.arg, in.cell.id.args.vec) {
   return(out.data)
 }
 
+# calculate the coefficient of variation (CV) for a statistic, ignoring NA values
+cv = function (x) {
+  x <- x[!is.na(x)] # remove NA values
+  
+  res <- sd(x) / mean(x)
+  return(res)
+}
+
+# TODO: add time points and sort by those
+# INPUT: data set consisting of grouping attributes (ID, class) + several features across the columns
+addDifferencesAndAggregate = function (in.data, in.attribs.group) {
+  loc.data <- in.data %>%
+    group_by_(.dots = in.attribs.group) %>%
+    mutate_each(funs(diffs = c(NA, diff(.)))) %>%
+    na.omit() %>%
+    summarise_each(funs(col.cv = cv(.), col.mn = mean(.)))
+}
+
+
 aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly = NULL) {
   
   loc.dat.1 <- in.data %>%
