@@ -1,6 +1,9 @@
 # Data Folder
 /data/
 
+# Test R Files
+*.test.R
+
 # Compiled class file
 *.class
 

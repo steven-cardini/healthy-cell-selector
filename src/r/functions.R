@@ -1,15 +1,15 @@
 library(dplyr)
 library(data.table) 
 
-addCellIds = function (in.data, in.cellid.arg, in.id.args.vec) {
+addCellIds = function (in.data) {
   
   # add cell IDs to data set
   loc.data <- in.data %>%
-    dplyr::select(dplyr::one_of(in.id.args.vec)) %>%
+    dplyr::select(dplyr::one_of(dat.id.args.vec)) %>%
     dplyr::distinct()
-  loc.data[,in.cellid.arg] <- 1:nrow(loc.data)
+  loc.data[,dat.cellid.arg] <- 1:nrow(loc.data)
   
-  out.data <- dplyr::inner_join(loc.data, in.data, by = in.id.args.vec) # now equals input data set plus new row in.cell.id.arg
+  out.data <- dplyr::inner_join(loc.data, in.data, by = dat.id.args.vec) # now equals input data set plus new row in.cell.id.arg
   
   return(out.data)
 }
@@ -25,9 +25,9 @@ cv = function (x) {
 }
 
 # INPUT: data set consisting of grouping attributes (ID, class) + several features across the columns
-addDifferencesAndAggregate = function (in.data, in.grouping.args) {
+addDifferencesAndAggregate = function (in.data) {
   loc.data <- in.data %>%
-    group_by_(.dots = in.grouping.args) %>%
+    group_by_(.dots = dat.feature.grouping.args) %>%
     mutate_each(funs(diffs = c(NA, diff(.)))) %>%
     na.omit() %>%
     summarise_each(funs(col.cv = cv(.), col.mn = mean(.)))
@@ -35,50 +35,34 @@ addDifferencesAndAggregate = function (in.data, in.grouping.args) {
   return(loc.data)
 }
 
-
-labelOutliers = function (in.data, in.class.arg, in.grouping.args) {
+labelOutliersAsFalse = function (in.data, in.quantile.lower, in.quantile.upper) {
   
   loc.data <- in.data
-  features <- setdiff(names(loc.data), in.grouping.args)
-  setDT(loc.data)[,  (in.class.arg) := Reduce(`&`, lapply(.SD, function(x) x < quantile(x, 0.99) & 
-                                             x > quantile(x, .01))), .SDcols = features]
+  features <- setdiff(names(loc.data), dat.feature.grouping.args)
+  setDT(loc.data)[,  (dat.class.arg) := Reduce(`&`, lapply(.SD, function(x) x < quantile(x, in.quantile.upper) & 
+                                             x > quantile(x, in.quantile.lower))), .SDcols = features]
   
   return(loc.data)
   
 }
 
-
-scaleCellData = function (in.data, in.attrib.scale.exclude) {
+myScaleFunction = function (in.vector) {
   
-  loc.attrib.scale.exclude.ind <- grep(paste(in.attrib.scale.exclude, collapse="|"), names(in.data))
-  out.data <- in.data
-  out.data[,-c(loc.attrib.scale.exclude.ind)] <- scale(out.data[,-c(loc.attrib.scale.exclude.ind)])
+  loc.vector <- in.vector
+  loc.vector <- loc.vector - mean(loc.vector, na.rm = TRUE) # center the values at 0
+  loc.vector <- loc.vector / sd(loc.vector, na.rm = TRUE) # scale the values by their standard deviation
   
-  return(out.data)
+  return (loc.vector)
   
 }
 
-
-
-# TODO: probably obsolete function
-aggregateCellData = function (in.data, in.attribs.group, in.attribs.meanplus, in.attribs.meanonly = NULL) {
+scaleFeatures = function (in.data) {
   
-  loc.dat.1 <- in.data %>%
-    dplyr::group_by_(.dots = in.attribs.group) %>%
-    #dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(median="median", var="var", IQR="IQR"))
-    dplyr::summarise_at(.cols = in.attribs.meanplus, .funs = c(Mean="mean", Var="var", Min="min", Max="max"))
+  loc.data <- in.data
+  loc.scale.cols <- setdiff(names(loc.data), dat.feature.grouping.args)
+  loc.data <- loc.data %>% mutate_at(loc.scale.cols, myScaleFunction)
   
-  if(is.null(in.attribs.meanonly)) {
-    out.data <- loc.dat.1
-  } else {
-    loc.dat.2 <- in.data %>%
-      dplyr::group_by_(.dots = in.attribs.group) %>%
-      dplyr::summarise_at(.cols = in.attribs.meanonly, .funs = c(Mean="mean"))
-    
-    out.data <- dplyr::full_join(loc.dat.1, loc.dat.2, by=c("cell_Id", "mid.in"))
-  }
-  
-  return(out.data)
+  return(loc.data)
   
 }
 

@@ -1,57 +1,9 @@
-require(data.table)
-require(dplyr)
-require(ggplot2)
-require(plotly)
-
-require(rpart)
-require(rpart.plot)
-require(RWeka)
+library(dplyr)
+library(rpart)
+library(rpart.plot)
 
 setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
-
-## Global variables
-
-file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
-
-cell.id.arg <- 'cell_Id'
-cell.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
-cell.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
-cell.class.arg <- 'mid.in'
-cell.feature.prefix.regex <- 'objCell_*'
-cell.feature.exclude.regex <- '.*(Intensity|Neighbors)+.*'
-
-plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
-plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
-plot.group.arg <- cell.id.arg
-plot.color.arg <- cell.class.arg
-
-attrib.scale.exclude <- c('objCell_AreaShape_EulerNumber')
-
-
-
-# import data from file and add cell IDs
-
-dat <- fread(file.path)
-dat <- addCellIds(dat, cell.id.arg, cell.id.args.vec)
-
-# create data and metadata subsets for further analysis
-
-dat.raw <- dplyr::select(dat, -dplyr::one_of(cell.id.args.vec, cell.metadata.args.vec))
-dat.features <- dplyr::select(dat.raw, one_of(cell.id.arg, cell.class.arg), matches(cell.feature.prefix.regex), -matches(cell.feature.exclude.regex))
-dat.aggr.meta <- dplyr::select(dat, dplyr::one_of(cell.id.arg, cell.class.arg, cell.id.args.vec, cell.metadata.args.vec)) %>%
-  dplyr::distinct()
-rm(dat) # delete raw data
-
-
-# aggregate data (average) for each cell and add variance, min, max and median for some attributes
-
-attrib.aggr.group <- c(cell.id.arg, cell.class.arg)
-attrib.aggr.meanplus <- setdiff(names(dat.features), c(attrib.scale.exclude, cell.id.arg, cell.class.arg))
-attrib.aggr.meanonly <- attrib.scale.exclude
-
-dat.features.aggr <- aggregateCellData(dat.features, attrib.aggr.group, attrib.aggr.meanplus, attrib.aggr.meanonly)
-dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.exclude, cell.id.arg, cell.class.arg))  
 
 
 # Build decision tree (rpart)# Build decision tree (rpart)
@@ -59,31 +11,33 @@ dat.features.aggr.scaled <- scaleCellData(dat.features.aggr, c(attrib.scale.excl
 # https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
 
 
-dat.dt.input <- dat.features.aggr.scaled
-dat.dt.input$mid.in[dat.dt.input$mid.in==TRUE] <- "healthy"
-dat.dt.input$mid.in[dat.dt.input$mid.in==FALSE] <- "not healthy"
+dat.dt.input <- dat.features.aggr.3 %>% 
+  mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = dat.class.arg) %>% 
+  mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = dat.class.arg)
 
-dat.dt.predict <- dat.dt.input %>%
-  dplyr::ungroup() %>%
-  dplyr::select(-get(cell.class.arg))
+
+dat.dt.predicted <- dat.dt.input %>%
+  dplyr::select(-get(dat.class.arg))
 
 
 # Build the decision tree according to Gini split method
 
 #dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
-dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"), control=rpart.control(cp = 0.01, minsplit = 8))
-prp(dt.gini, extra = 2, under = TRUE, varlen = 0)
+dt.gini <- rpart(mid.in.man~., data=dat.dt.input, parms=list(split="gini"))
+prp(dt.gini, under = TRUE, varlen = 0)
 summary(dt.gini)
 
 pred.gini <- predict(dt.gini, type="class")
 sprintf("Confusion Matrix for dt.gini")
 table(pred.gini, dat.dt.input$mid.in)
 
-predicted <- predict(dt.gini, dat.dt.predict)
+predicted <- predict(dt.gini, dat.dt.predicted)
 predicted <- (predicted[,1] > 0.5)
 
+# TODO: write output to CSV
 dat.raw.predicted.gini <- data.table(dat.raw)
 dat.raw.predicted.gini[, (cell.class.arg) := predicted[get(cell.id.arg)]]
+write.csv(dat.raw.predicted.gini, 'data/data.predicted.gini.csv')
 
 
 # Build the decision tree according to Information split method

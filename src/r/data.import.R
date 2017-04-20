@@ -30,8 +30,8 @@ cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
 ###############################################
 # Import data from file and add cell IDs
 
-dat <- fread(file.path)
-dat <- addCellIds(dat, dat.cellid.arg, dat.id.args.vec)
+dat <- read.csv(file.path, header = TRUE)
+dat <- addCellIds(dat)
 
 
 ###############################################
@@ -68,9 +68,10 @@ rm(dat) # delete raw data
 
 ##############################################
 # Add differences between time points as new features and aggregate features for each cell (coefficient of variation, mean)
-dat.features.aggr.1 <- addDifferencesAndAggregate(dat.features %>% dplyr::select(-dplyr::one_of(dat.timepoint.arg)), dat.feature.grouping.args)
+dat.features.aggr.1 <- addDifferencesAndAggregate(dat.features %>% dplyr::select(-dplyr::one_of(dat.timepoint.arg)))
 
-# Label cells FALSE if any of the features is an outlier (< 0.01 quantile OR > 0.99 quantile)
-dat.features.aggr.2 <- labelOutliers(dat.features.aggr, dat.class.arg, dat.feature.grouping.args)
+# Label cells FALSE if any of the features is an outlier (< 0.001 quantile OR > 0.999 quantile)
+dat.features.aggr.2 <- labelOutliersAsFalse(dat.features.aggr.1, 0.001, 0.999)
 
 # TODO: scale the features
+dat.features.aggr.3 <- scaleFeatures(dat.features.aggr.2)
