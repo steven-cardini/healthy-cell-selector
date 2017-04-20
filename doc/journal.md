@@ -1,14 +1,20 @@
 # Plan for upcoming Weeks
 
-## Week 15
+## Week 16
 - Evaluate decision tree / naive bayesian with new features (time point differences); use only values from time point 10 on (?)
 - Try another approach based on statistics (classify cells outside a defined quantile range as unhealthy)
 
-## Week 16
+## Week 17
 - Continue work from week 15
 - Maybe continue with another approach (Support Vector Machines?)
 
 # Project Journal
+
+## 20.04.2017
+14:00 - 18:30
+- Some refactoring to use dplyr and data.frames instead of data.table
+- Refined the labelling of outliers (use 0.001 and 0.999 quantiles)
+- Added a function to scale aggregated data
 
 ## 14.04.2017
 10:00 - 14:00
