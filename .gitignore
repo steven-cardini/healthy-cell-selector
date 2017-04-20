@@ -1,5 +1,6 @@
-# Data Folder
+# Data Folder and CSV files
 /data/
+*.csv
 
 # Test R Files
 *.test.R

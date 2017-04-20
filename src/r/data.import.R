@@ -13,7 +13,7 @@ source("src/r/functions.R")
 ##############################################
 # Global variables
 
-file.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
+file.input.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
 
 dat.cellid.arg <- 'cell_Id' # custom name for the new cell id attribute
 dat.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
@@ -23,14 +23,14 @@ dat.class.arg <- 'mid.in.man'
 
 dat.feature.grouping.args <- c(dat.cellid.arg, dat.class.arg)
 
-cell.feature.include.regex <- 'objCell_AreaShape*'
+cell.feature.include.regex <- '^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*'
 cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
 
 
 ###############################################
 # Import data from file and add cell IDs
 
-dat <- read.csv(file.path, header = TRUE)
+dat <- read.csv(file.input.path, header = TRUE)
 dat <- addCellIds(dat)
 
 
@@ -62,8 +62,6 @@ dat.meta <- dat %>%
   dplyr::select(dplyr::one_of(dat.cellid.arg, dat.class.arg, dat.id.args.vec, dat.metadata.args.vec)) %>%
   dplyr::distinct() %>%
   dplyr::arrange_(.dots = dat.cellid.arg)
-
-rm(dat) # delete raw data
 
 
 ##############################################
