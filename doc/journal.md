@@ -10,6 +10,13 @@
 
 # Project Journal
 
+## 21.04.2017
+19:30 - 21:00
+- Added generic functions to import datasets
+
+16:00 - 16:30
+- Project Meeting with Prof. B. Anrig
+
 ## 20.04.2017
 14:00 - 18:30
 - Some refactoring to use dplyr and data.frames instead of data.table
