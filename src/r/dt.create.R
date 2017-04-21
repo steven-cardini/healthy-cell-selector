@@ -1,3 +1,9 @@
+##############################################
+# Script to train decision tree classifiers and evaluate it on other datasets
+# Author: Steven Cardini
+# Spring 2017
+##############################################
+
 library(dplyr)
 library(rpart)
 library(rpart.plot)
@@ -6,44 +12,57 @@ setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
 source("src/r/functions.R")
 
 
-##############################################
+###########################################################
 # Global variables
 
-file.output.path <- 'data/dt.output.csv'
+file.input.training.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
+dat.training.class.arg <- 'mid.in.man'
+file.input.testing.path <- c('data/20170228_test_multipulses_30min_break.csv', 'data/20170228_test_multipulses_45min_break.csv', 'data/20170228_test_multipulses_60min_break.csv')
+dat.testing.class.arg <- 'mid.in'
+#file.output.path <- 'data/dt.output.csv'
 
 
-# Build decision tree (rpart)# Build decision tree (rpart)
+###########################################################
+# Prepare training dataset for decision tree
+
+dat.raw <- importRawDataset (file.input.training.path, dat.training.class.arg)
+
+dat.dt.input <- importTrainingDataset (file.input.training.path, dat.training.class.arg)
+dat.dt.input <- dat.dt.input %>% 
+  mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = dat.training.class.arg) %>% 
+  mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = dat.training.class.arg)
+
+
+###########################################################
+# Decision Tree (package rpart) - Gini split method
 # http://www.statmethods.net/advstats/cart.html
 # https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
 
+# Create formula from class variable for the decision tree
+fRpart <- as.formula(paste(dat.training.class.arg, '.', sep=" ~ "))
 
-dat.dt.input <- dat.features.aggr.3 %>% 
-  mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = dat.class.arg) %>% 
-  mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = dat.class.arg)
-
-
-# Build the decision tree according to Gini split method
-
-#dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
-dt.gini <- rpart(mid.in.man~., data=dat.dt.input, parms=list(split="gini"))
+# Construct decision tree
+dt.gini <- rpart(formula = fRpart, data=dat.dt.input, parms=list(split="gini"))
 prp(dt.gini, under = TRUE, varlen = 0)
 summary(dt.gini)
 
+# Evaluate decision tree with training dataset
 pred.gini <- predict(dt.gini, type="class")
 sprintf("Confusion Matrix for dt.gini")
-table(pred.gini, dat.dt.input$mid.in)
+table(pred.gini, dat.dt.input[,dat.training.class.arg])
 
-predicted <- predict(dt.gini, dat.dt.input %>% dplyr::select(-get(dat.class.arg)))
+predicted <- predict(dt.gini, dat.dt.input %>% dplyr::select(-get(dat.training.class.arg)))
 predicted <- (predicted[,1] > 0.5)
 
-# write output to CSV
-dat.predicted.gini <- dat
+# Write output data to CSV
+
+dat.predicted.gini <- dat.raw %>% dplyr::select(-get(dat.training.class.arg))
 dat.temp <- data.frame(c1 = as.integer(names(predicted)), c2 = predicted)
-colnames(dat.temp) <- c(dat.cellid.arg, 'output.class')
+colnames(dat.temp) <- c(dat.cellid.arg, dat.training.class.arg)
 dat.predicted.gini <- full_join(dat.predicted.gini, dat.temp, by = dat.cellid.arg)
 write.csv(dat.predicted.gini, file.output.path)
 
-
+# Evaluate decision tree with test dataset(s)
 
 
 
@@ -76,11 +95,12 @@ dat.raw.predicted.info[, (cell.class.arg) := predicted[get(cell.id.arg)]]
 
 
 # Plots
-
+require(ggplot2)
+require(plotly)
 plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
 plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
-plot.group.arg <- cell.id.arg
-plot.color.arg <- cell.class.arg
+plot.group.arg <- dat.cellid.arg
+plot.color.arg <- dat.class.arg
 
 # plot original data set
 doScatterPlot (dat, plot.x.arg, plot.y.arg, cell.id.arg, plot.color.arg)

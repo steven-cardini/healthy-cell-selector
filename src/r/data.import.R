@@ -13,7 +13,7 @@ source("src/r/functions.R")
 ##############################################
 # Global variables
 
-file.input.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
+file.input.training.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
 
 dat.cellid.arg <- 'cell_Id' # custom name for the new cell id attribute
 dat.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
@@ -30,7 +30,7 @@ cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
 ###############################################
 # Import data from file and add cell IDs
 
-dat <- read.csv(file.input.path, header = TRUE)
+dat <- read.csv(file.input.training.path, header = TRUE)
 dat <- addCellIds(dat)
 
 
@@ -71,5 +71,5 @@ dat.features.aggr.1 <- addDifferencesAndAggregate(dat.features %>% dplyr::select
 # Label cells FALSE if any of the features is an outlier (< 0.001 quantile OR > 0.999 quantile)
 dat.features.aggr.2 <- labelOutliersAsFalse(dat.features.aggr.1, 0.001, 0.999)
 
-# TODO: scale the features
+# Scale the features
 dat.features.aggr.3 <- scaleFeatures(dat.features.aggr.2)
