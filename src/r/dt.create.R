@@ -15,22 +15,27 @@ source("src/r/functions.R")
 ###########################################################
 # Global variables
 
-file.input.training.path <- 'data/20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
-dat.training.class.arg <- 'mid.in.man'
-file.input.testing.path <- c('data/20170228_test_multipulses_30min_break.csv', 'data/20170228_test_multipulses_45min_break.csv', 'data/20170228_test_multipulses_60min_break.csv')
-dat.testing.class.arg <- 'mid.in'
-#file.output.path <- 'data/dt.output.csv'
+experiment.id <- createExperimentId()
+
+input.training.file.name <- '20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv'
+input.training.class.arg <- 'mid.in.man'
+input.testing.files.name <- c('20170228_test_multipulses_30min_break.csv', '20170228_test_multipulses_45min_break.csv', '20170228_test_multipulses_60min_break.csv')
+input.testing.class.arg <- 'mid.in'
+
+input.file.alias <- c('dataset.training', 'dataset.test.30min', 'dataset.test.45min', 'dataset.test.60min')
+names(input.file.alias) <- c(input.training.file.name, input.testing.files.name)
+#file.output.path <- 'dt.output.csv'
 
 
 ###########################################################
 # Prepare training dataset for decision tree
 
-dat.raw <- importRawDataset (file.input.training.path, dat.training.class.arg)
+dat.training.raw <- importRawDataset (input.training.file.name, input.training.class.arg)
 
-dat.dt.input <- importTrainingDataset (file.input.training.path, dat.training.class.arg)
-dat.dt.input <- dat.dt.input %>% 
-  mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = dat.training.class.arg) %>% 
-  mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = dat.training.class.arg)
+dat.training.dt.in <- importTrainingDataset (input.training.file.name, input.training.class.arg)
+dat.training.dt.in <- dat.training.dt.in %>% 
+  mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = input.training.class.arg) %>% 
+  mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = input.training.class.arg)
 
 
 ###########################################################
@@ -39,26 +44,37 @@ dat.dt.input <- dat.dt.input %>%
 # https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
 
 # Create formula from class variable for the decision tree
-fRpart <- as.formula(paste(dat.training.class.arg, '.', sep=" ~ "))
+fRpart <- as.formula(paste(input.training.class.arg, '.', sep=" ~ "))
 
 # Construct decision tree
-dt.gini <- rpart(formula = fRpart, data=dat.dt.input, parms=list(split="gini"))
-prp(dt.gini, under = TRUE, varlen = 0)
+dt.gini <- rpart(formula = fRpart, data=dat.training.dt.in, parms=list(split="gini"))
 summary(dt.gini)
+
+# Evaluate decision tree with training dataset
+data.test.0 <- importTestDataset(input.training.file.name, input.training.class.arg)
+classes.actual.0 <- importActualClassLabels(input.training.file.name, input.training.class.arg, relabel = FALSE)
+classes.eval.0 <- evaluateDecisionTree (dt.gini, data.test.0, classes.actual.0, input.file.alias[input.training.file.name])
+
+
+# TODO
+
+############################################################################
+
+
 
 # Evaluate decision tree with training dataset
 pred.gini <- predict(dt.gini, type="class")
 sprintf("Confusion Matrix for dt.gini")
-table(pred.gini, dat.dt.input[,dat.training.class.arg])
+table(pred.gini, dat.dt.input[,input.training.class.arg])
 
-predicted <- predict(dt.gini, dat.dt.input %>% dplyr::select(-get(dat.training.class.arg)))
+predicted <- predict(dt.gini, dat.dt.input %>% dplyr::select(-get(input.training.class.arg)))
 predicted <- (predicted[,1] > 0.5)
 
 # Write output data to CSV
 
-dat.predicted.gini <- dat.raw %>% dplyr::select(-get(dat.training.class.arg))
+dat.predicted.gini <- dat.training.raw %>% dplyr::select(-get(input.training.class.arg))
 dat.temp <- data.frame(c1 = as.integer(names(predicted)), c2 = predicted)
-colnames(dat.temp) <- c(dat.cellid.arg, dat.training.class.arg)
+colnames(dat.temp) <- c(dat.cellid.arg, input.training.class.arg)
 dat.predicted.gini <- full_join(dat.predicted.gini, dat.temp, by = dat.cellid.arg)
 write.csv(dat.predicted.gini, file.output.path)
 

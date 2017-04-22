@@ -14,25 +14,37 @@ dat.timepoint.arg <- 'RealTime'
 cell.feature.include.regex <- '^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*'
 cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
 
+data.files.path <- 'data/'
+result.files.path <- 'results/'
 
 
 #################################################
 # PUBLIC FUNCTIONS
 #################################################
 
-importRawDataset = function (in.file.path, in.class.arg) {
+createExperimentId = function () {
   
-  loc.data <- importDataFromFile(in.file.path, in.class.arg, features.only = FALSE)
+  loc.id <- paste(sample(c(0:9, letters[1:6]), 6, replace = TRUE), collapse = '')
+  
+  return(loc.id)
+  
+}
+
+if (!exists('experiment.id')) experiment.id <- createExperimentId()
+
+importRawDataset = function (in.file.name, in.class.arg) {
+  
+  loc.data <- importDataFromFile(in.file.name, in.class.arg, features.only = FALSE)
   
   return(loc.data)
   
 }
 
 
-importTrainingDataset = function (in.file.path, in.class.arg) {
+importTrainingDataset = function (in.file.name, in.class.arg) {
   
   # Import test dataset from file
-  loc.data <- importDataFromFile(in.file.path, in.class.arg, features.only = TRUE)
+  loc.data <- importDataFromFile(in.file.name, in.class.arg, features.only = TRUE)
   
   # Order rows by cell_Id, timepoint and remove timepoints from dataset
   loc.data <- loc.data %>% 
@@ -53,10 +65,10 @@ importTrainingDataset = function (in.file.path, in.class.arg) {
 }
 
 
-importTestDataset = function (in.file.path, in.class.arg) {
+importTestDataset = function (in.file.name, in.class.arg) {
   
   # Import test dataset from file
-  loc.data <- importDataFromFile(in.file.path, in.class.arg, features.only = TRUE)
+  loc.data <- importDataFromFile(in.file.name, in.class.arg, features.only = TRUE)
   
   # Order rows by cell_Id, timepoint and remove timepoints from dataset
   loc.data <- loc.data %>% 
@@ -77,15 +89,89 @@ importTestDataset = function (in.file.path, in.class.arg) {
 }
 
 
+importActualClassLabels = function (in.file.name, in.class.arg, relabel) {
+  
+  # Import whole dataset from file
+  loc.data <- importTrainingDataset(in.file.name, in.class.arg)
+  
+  # Order rows by cell_Id, timepoint and select class attribute only
+  loc.data <- loc.data %>% 
+    select_(dat.cellid.arg, in.class.arg)
+  
+  # Change class labels if desired
+  if (relabel) {
+    loc.data <- loc.data %>% 
+      mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = in.class.arg) %>% 
+      mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = in.class.arg)
+  }
+    
+  loc.vec <- as.vector(loc.data[,in.class.arg])
+  names(loc.vec) <- loc.data[,dat.cellid.arg]
+  
+  
+
+  return(loc.vec)
+  
+}
+
+# in.test.data -> data.frame loaded with function importTestDataset()
+# in.true.data -> vector with actual classification for performance assessment 
+evaluateDecisionTree = function (in.dt, in.test.data, in.true.data, in.test.data.alias) {
+  
+  loc.file.path <- paste(result.files.path, experiment.id, '_', in.test.data.alias, sep = '')
+  loc.pdf.file.path <- paste(loc.file.path, 'pdf', sep = '.')
+  loc.txt.file.path <- paste(loc.file.path, 'txt', sep = '.')
+  
+  # Save PDF file of decision tree if not present yet
+  if (!file.exists(loc.pdf.file.path)) {
+    pdf(file = loc.pdf.file.path)
+    prp(in.dt, under = TRUE, varlen = 0)
+    dev.off()
+  }
+  
+  loc.class.prob <- predict(in.dt, in.test.data) # probabilities of class assignment
+  loc.class.pred <- loc.class.prob[,'healthy']>0.5 # classes predicted by decision tree
+  loc.conf.matrix <- table(loc.class.pred, in.true.data)
+  
+  # Save information and error statistics to text file
+  loc.tp <- loc.conf.matrix['TRUE', 'TRUE'] # true positives
+  loc.fp <- loc.conf.matrix['TRUE', 'FALSE'] # false positives
+  loc.tn <- loc.conf.matrix['FALSE', 'FALSE'] # true negatives
+  loc.fn <- loc.conf.matrix['FALSE', 'TRUE'] # false negatives
+  loc.tpr <- loc.tp / (loc.tp + loc.fn) # true positive rate = TP / number of positives
+  loc.fpr <- loc.fp / (loc.fp + loc.tn) # false positive rate = FP / number of negatives
+  loc.succ <- (loc.tp + loc.tn) / (loc.tp + loc.tn + loc.fp + loc.fn) # success rate, number of correct classi???cations divided by the total number of classi???cations
+  loc.fileconn <- file(loc.txt.file.path)
+  writeLines(c(paste0('Test dataset: ', names(in.test.data.alias)),
+    paste0("TP: ", loc.tp), paste0("TN: ", loc.tn), paste0("FP: ", loc.fp), paste0("FN: ", loc.fn), paste0("TPR: ", loc.tpr), paste0("FPR: ", loc.fpr), paste0("Success Rate: ", loc.succ)), loc.fileconn)
+  close(loc.fileconn)
+  
+  
+  # TODO: save plot to PNG file
+  # png(filename = 'data/testkfjsdfj.png', width = 700, height = 500, units = 'px')
+  
+  
+  # TODO: save dataset with classes assigned by decision tree to CSV file
+  # dat.predicted.gini <- dat.training.raw %>% dplyr::select(-get(input.training.class.arg))
+  # dat.temp <- data.frame(c1 = as.integer(names(predicted)), c2 = predicted)
+  # colnames(dat.temp) <- c(dat.cellid.arg, input.training.class.arg)
+  # dat.predicted.gini <- full_join(dat.predicted.gini, dat.temp, by = dat.cellid.arg)
+  # write.csv(dat.predicted.gini, file.output.path)
+  
+}
+
+
 
 #################################################
 # PRIVATE FUNCTIONS
 #################################################
 
-importDataFromFile = function (in.file.path, in.class.arg, features.only) {
+importDataFromFile = function (in.file.name, in.class.arg, features.only) {
+  
+  loc.file.path <- paste(data.files.path, in.file.name, sep = '')
   
   # Import data from file and add cell IDs
-  loc.data <- read.csv(in.file.path)
+  loc.data <- read.csv(loc.file.path)
   loc.data <- addCellIds(loc.data)
   
   # Test that all cells contain the same number of time points and save the number of timepoints
