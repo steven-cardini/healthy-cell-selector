@@ -43,6 +43,8 @@ dat.training.dt.in <- dat.training.dt.in %>%
 # http://www.statmethods.net/advstats/cart.html
 # https://www.r-bloggers.com/classification-trees-using-the-rpart-function/
 
+# To weigh the classes: https://stackoverflow.com/questions/8717493/using-minsplit-and-unequal-weights-in-rpart
+
 # Create formula from class variable for the decision tree
 fRpart <- as.formula(paste(input.training.class.arg, '.', sep=" ~ "))
 
@@ -51,39 +53,21 @@ dt.gini <- rpart(formula = fRpart, data=dat.training.dt.in, parms=list(split="gi
 summary(dt.gini)
 
 # Evaluate decision tree with training dataset
-data.test.0 <- importTestDataset(input.training.file.name, input.training.class.arg)
-classes.actual.0 <- importActualClassLabels(input.training.file.name, input.training.class.arg, relabel = FALSE)
-classes.eval.0 <- evaluateDecisionTree (dt.gini, data.test.0, classes.actual.0, input.file.alias[input.training.file.name])
+evaluateDecisionTree (dt.gini, input.training.file.name, input.training.class.arg, input.file.alias[input.training.file.name])
+
+# Evaluate decision tree with testing datasets
+evaluateDecisionTree (dt.gini, input.testing.files.name[2], input.testing.class.arg, input.file.alias[input.testing.files.name[2]])
 
 
-# TODO
+
+for (t in 1:length(input.testing.files.name))
+  evaluateDecisionTree (dt.gini, input.testing.files.name[t], input.testing.class.arg, input.file.alias[input.testing.files.name[t]])
+
+
 
 ############################################################################
-
-
-
-# Evaluate decision tree with training dataset
-pred.gini <- predict(dt.gini, type="class")
-sprintf("Confusion Matrix for dt.gini")
-table(pred.gini, dat.dt.input[,input.training.class.arg])
-
-predicted <- predict(dt.gini, dat.dt.input %>% dplyr::select(-get(input.training.class.arg)))
-predicted <- (predicted[,1] > 0.5)
-
-# Write output data to CSV
-
-dat.predicted.gini <- dat.training.raw %>% dplyr::select(-get(input.training.class.arg))
-dat.temp <- data.frame(c1 = as.integer(names(predicted)), c2 = predicted)
-colnames(dat.temp) <- c(dat.cellid.arg, input.training.class.arg)
-dat.predicted.gini <- full_join(dat.predicted.gini, dat.temp, by = dat.cellid.arg)
-write.csv(dat.predicted.gini, file.output.path)
-
-# Evaluate decision tree with test dataset(s)
-
-
-
-
-
+# TODO: Build the decision tree according to Information split method
+############################################################################
 
 # Build the decision tree according to Information split method
 

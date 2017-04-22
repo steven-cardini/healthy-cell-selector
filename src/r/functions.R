@@ -1,5 +1,7 @@
 library(dplyr)
 library(data.table) 
+require(ggplot2)
+require(plotly)
 
 
 #################################################
@@ -16,6 +18,10 @@ cell.feature.exclude.regex <- '.*(EulerNumber)+.*'
 
 data.files.path <- 'data/'
 result.files.path <- 'results/'
+
+plot.x.arg <- 'objNuc_Intensity_MeanIntensity_imNucCorrBg'
+plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
+plot.group.arg <- dat.cellid.arg
 
 
 #################################################
@@ -94,7 +100,7 @@ importActualClassLabels = function (in.file.name, in.class.arg, relabel) {
   # Import whole dataset from file
   loc.data <- importTrainingDataset(in.file.name, in.class.arg)
   
-  # Order rows by cell_Id, timepoint and select class attribute only
+  # Select cell_Id and class attributes only
   loc.data <- loc.data %>% 
     select_(dat.cellid.arg, in.class.arg)
   
@@ -107,8 +113,6 @@ importActualClassLabels = function (in.file.name, in.class.arg, relabel) {
     
   loc.vec <- as.vector(loc.data[,in.class.arg])
   names(loc.vec) <- loc.data[,dat.cellid.arg]
-  
-  
 
   return(loc.vec)
   
@@ -116,11 +120,27 @@ importActualClassLabels = function (in.file.name, in.class.arg, relabel) {
 
 # in.test.data -> data.frame loaded with function importTestDataset()
 # in.true.data -> vector with actual classification for performance assessment 
-evaluateDecisionTree = function (in.dt, in.test.data, in.true.data, in.test.data.alias) {
+evaluateDecisionTree = function (in.dt, in.file.name, in.class.arg, in.file.alias) {
   
-  loc.file.path <- paste(result.files.path, experiment.id, '_', in.test.data.alias, sep = '')
-  loc.pdf.file.path <- paste(loc.file.path, 'pdf', sep = '.')
-  loc.txt.file.path <- paste(loc.file.path, 'txt', sep = '.')
+  # Import raw dataset and remove class attribute to output it with new classification labels further down
+  loc.data.out <- importRawDataset(in.file.name, in.class.arg)
+  loc.data.out <- loc.data.out %>% dplyr::select(-get(in.class.arg))
+  
+  # Import test dataset
+  loc.data.test <- importTestDataset(in.file.name, in.class.arg)
+  
+  # Prepare vector with true class labels for evaluation
+  loc.class.act <- importActualClassLabels(in.file.name, in.class.arg, relabel = FALSE)
+  
+  # Initialize paths for output files
+  loc.file.path <- paste0(result.files.path, experiment.id, '/')
+  if(!dir.exists(loc.file.path))
+    dir.create(loc.file.path)
+  loc.file.name <- paste0(experiment.id, '_', in.file.alias)
+  loc.pdf.file.path <- paste0(loc.file.path, experiment.id, '_dt.pdf')
+  loc.txt.file.path <- paste0(loc.file.path, loc.file.name, '.txt')
+  loc.png.file.path <- paste0(loc.file.path, loc.file.name, '.png')
+  loc.csv.file.path <- paste0(loc.file.path, loc.file.name, '.csv')
   
   # Save PDF file of decision tree if not present yet
   if (!file.exists(loc.pdf.file.path)) {
@@ -129,11 +149,28 @@ evaluateDecisionTree = function (in.dt, in.test.data, in.true.data, in.test.data
     dev.off()
   }
   
-  loc.class.prob <- predict(in.dt, in.test.data) # probabilities of class assignment
-  loc.class.pred <- loc.class.prob[,'healthy']>0.5 # classes predicted by decision tree
-  loc.conf.matrix <- table(loc.class.pred, in.true.data)
+  # Predict classes of training dataset with decision tree
+  loc.class.prob <- predict(in.dt, loc.data.test) # probabilities of class assignment
   
-  # Save information and error statistics to text file
+  assign("data.test", loc.data.test, envir = .GlobalEnv)
+  
+  assign("class.prob", loc.class.prob, envir = .GlobalEnv)
+  
+  
+  loc.class.pred <- loc.class.prob[,'healthy']>0.5 # classes predicted by decision tree
+  loc.conf.matrix <- table(loc.class.pred, loc.class.act)
+  # TODO: Check if confusion matrix is 4x4
+  
+  
+  # Add predicted class labels to output dataset
+  loc.data.temp <- data.frame(c1 = as.integer(names(loc.class.pred)), c2 = loc.class.pred)
+  colnames(loc.data.temp) <- c(dat.cellid.arg, in.class.arg)
+  loc.data.out <- full_join(loc.data.out, loc.data.temp, by = dat.cellid.arg)
+  rm(loc.data.temp)
+  
+  assign("conf.mat", loc.conf.matrix, envir = .GlobalEnv)
+  
+  # Save information and error statistics of classification to text file
   loc.tp <- loc.conf.matrix['TRUE', 'TRUE'] # true positives
   loc.fp <- loc.conf.matrix['TRUE', 'FALSE'] # false positives
   loc.tn <- loc.conf.matrix['FALSE', 'FALSE'] # true negatives
@@ -142,21 +179,19 @@ evaluateDecisionTree = function (in.dt, in.test.data, in.true.data, in.test.data
   loc.fpr <- loc.fp / (loc.fp + loc.tn) # false positive rate = FP / number of negatives
   loc.succ <- (loc.tp + loc.tn) / (loc.tp + loc.tn + loc.fp + loc.fn) # success rate, number of correct classi???cations divided by the total number of classi???cations
   loc.fileconn <- file(loc.txt.file.path)
-  writeLines(c(paste0('Test dataset: ', names(in.test.data.alias)),
+  writeLines(c(paste0('Test dataset: ', names(in.file.alias)),
     paste0("TP: ", loc.tp), paste0("TN: ", loc.tn), paste0("FP: ", loc.fp), paste0("FN: ", loc.fn), paste0("TPR: ", loc.tpr), paste0("FPR: ", loc.fpr), paste0("Success Rate: ", loc.succ)), loc.fileconn)
   close(loc.fileconn)
   
   
-  # TODO: save plot to PNG file
-  # png(filename = 'data/testkfjsdfj.png', width = 700, height = 500, units = 'px')
+  # Save plot to PNG file
+  #png(filename = loc.png.file.path, width = 700, height = 500, units = 'px')
+  doScatterPlot (loc.data.out, plot.x.arg, plot.y.arg, dat.cellid.arg, in.class.arg, loc.png.file.path)
+  #dev.off()
   
   
-  # TODO: save dataset with classes assigned by decision tree to CSV file
-  # dat.predicted.gini <- dat.training.raw %>% dplyr::select(-get(input.training.class.arg))
-  # dat.temp <- data.frame(c1 = as.integer(names(predicted)), c2 = predicted)
-  # colnames(dat.temp) <- c(dat.cellid.arg, input.training.class.arg)
-  # dat.predicted.gini <- full_join(dat.predicted.gini, dat.temp, by = dat.cellid.arg)
-  # write.csv(dat.predicted.gini, file.output.path)
+  # Save dataset with classes assigned by decision tree to CSV file
+  write.csv(loc.data.out, loc.csv.file.path)
   
 }
 
@@ -168,7 +203,7 @@ evaluateDecisionTree = function (in.dt, in.test.data, in.true.data, in.test.data
 
 importDataFromFile = function (in.file.name, in.class.arg, features.only) {
   
-  loc.file.path <- paste(data.files.path, in.file.name, sep = '')
+  loc.file.path <- paste0(data.files.path, in.file.name)
   
   # Import data from file and add cell IDs
   loc.data <- read.csv(loc.file.path)
@@ -176,8 +211,8 @@ importDataFromFile = function (in.file.name, in.class.arg, features.only) {
   
   # Test that all cells contain the same number of time points and save the number of timepoints
   test <- table(loc.data[,dat.cellid.arg])
-  stopifnot(var(test) == 0)
-  stopifnot(mean(test) %% 1 == 0)
+  #stopifnot(var(test) == 0)
+  #stopifnot(mean(test) %% 1 == 0)
   rm(test)
   
   # Test that there is the identical classification (TRUE | FALSE) for all time points of a cell
@@ -269,18 +304,15 @@ scaleFeatures = function (in.data, in.class.arg) {
 }
 
 
-
-
-
-
-
-
-doScatterPlot = function (in.data, in.plot.x.arg, in.plot.y.arg, in.plot.group, in.plot.color = 1) {
+doScatterPlot = function (in.data, in.plot.x.arg, in.plot.y.arg, in.plot.group, in.plot.color = 1, save.file = FALSE) {
   
   ggplot(in.data, aes_string(x = in.plot.x.arg, y = in.plot.y.arg, group = in.plot.group)) + 
     geom_point(alpha = 0.02) + 
     geom_path(aes_string(colour = in.plot.color), alpha = 0.5) + 
     theme_bw()
+  
+  if(is.character(save.file))
+    ggsave(save.file)
   
 }
 
