@@ -10,6 +10,11 @@
 
 # Project Journal
 
+## 22.04.2017
+16:30 - 19:30
+- Added generic function to evaluate a decision tree with a given test dataset
+- Added experiment id
+
 ## 21.04.2017
 19:30 - 21:00
 - Added generic functions to import datasets
