@@ -1,0 +1,8 @@
+Input dataset: 20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv
+TP: 181
+TN: 85
+FP: 33
+FN: 4
+TPR: 0.978378378378378
+FPR: 0.279661016949153
+Success Rate: 0.877887788778878

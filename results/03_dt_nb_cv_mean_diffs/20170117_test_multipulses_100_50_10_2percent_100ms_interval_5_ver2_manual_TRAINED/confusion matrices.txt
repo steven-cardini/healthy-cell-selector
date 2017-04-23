@@ -1,4 +1,0 @@
-20170420_dt_rpart_gini
-pred.gini     healthy not healthy
-  healthy         181          33
-  not healthy       4          85

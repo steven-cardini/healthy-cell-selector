@@ -1,5 +1,0 @@
-training input data: 20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual
-
-outliers were labelled as false (if any aggregated feature < .001 quantile or > .999  quantile of all aggregated values for that feature)
-
-dt.gini <- rpart(mid.in~., data=dat.dt.input, parms=list(split="gini"))
