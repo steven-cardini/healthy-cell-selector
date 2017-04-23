@@ -66,6 +66,8 @@ importTrainingDataset = function (in.file.name, in.class.arg) {
   # Scale the features
   loc.data <- scaleFeatures(loc.data, in.class.arg)
 
+  loc.data <- as.data.frame(loc.data)
+  
   return(loc.data)
   
 }
@@ -90,6 +92,8 @@ importTestDataset = function (in.file.name, in.class.arg) {
   # Remove the class attribute
   loc.data <- loc.data %>% dplyr::select(-get(in.class.arg))
   
+  loc.data <- as.data.frame(loc.data)
+  
   return(loc.data)
   
 }
@@ -102,13 +106,13 @@ importActualClassLabels = function (in.file.name, in.class.arg, relabel) {
   
   # Select cell_Id and class attributes only
   loc.data <- loc.data %>% 
-    select_(dat.cellid.arg, in.class.arg)
+    dplyr::select_(dat.cellid.arg, in.class.arg)
   
   # Change class labels if desired
   if (relabel) {
     loc.data <- loc.data %>% 
-      mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = in.class.arg) %>% 
-      mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = in.class.arg)
+      dplyr::mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = in.class.arg) %>% 
+      dplyr::mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = in.class.arg)
   }
     
   loc.vec <- as.vector(loc.data[,in.class.arg])
@@ -149,26 +153,20 @@ evaluateDecisionTree = function (in.dt, in.file.name, in.class.arg, in.file.alia
     dev.off()
   }
   
-  # Predict classes of training dataset with decision tree
+  # Predict classes of training dataset with decision tree and create a confusion matrix / table
   loc.class.prob <- predict(in.dt, loc.data.test) # probabilities of class assignment
-  
-  assign("data.test", loc.data.test, envir = .GlobalEnv)
-  
-  assign("class.prob", loc.class.prob, envir = .GlobalEnv)
-  
-  
   loc.class.pred <- loc.class.prob[,'healthy']>0.5 # classes predicted by decision tree
   loc.conf.matrix <- table(loc.class.pred, loc.class.act)
-  # TODO: Check if confusion matrix is 4x4
   
-  
+  # Test that confusion matrix is 4x4
+  stopifnot(dim(loc.conf.matrix)[1] == 2)
+  stopifnot(dim(loc.conf.matrix)[2] == 2)
+
   # Add predicted class labels to output dataset
   loc.data.temp <- data.frame(c1 = as.integer(names(loc.class.pred)), c2 = loc.class.pred)
   colnames(loc.data.temp) <- c(dat.cellid.arg, in.class.arg)
   loc.data.out <- full_join(loc.data.out, loc.data.temp, by = dat.cellid.arg)
   rm(loc.data.temp)
-  
-  assign("conf.mat", loc.conf.matrix, envir = .GlobalEnv)
   
   # Save information and error statistics of classification to text file
   loc.tp <- loc.conf.matrix['TRUE', 'TRUE'] # true positives
@@ -179,16 +177,14 @@ evaluateDecisionTree = function (in.dt, in.file.name, in.class.arg, in.file.alia
   loc.fpr <- loc.fp / (loc.fp + loc.tn) # false positive rate = FP / number of negatives
   loc.succ <- (loc.tp + loc.tn) / (loc.tp + loc.tn + loc.fp + loc.fn) # success rate, number of correct classi???cations divided by the total number of classi???cations
   loc.fileconn <- file(loc.txt.file.path)
-  writeLines(c(paste0('Test dataset: ', names(in.file.alias)),
+  writeLines(c(paste0('Input dataset: ', names(in.file.alias)),
     paste0("TP: ", loc.tp), paste0("TN: ", loc.tn), paste0("FP: ", loc.fp), paste0("FN: ", loc.fn), paste0("TPR: ", loc.tpr), paste0("FPR: ", loc.fpr), paste0("Success Rate: ", loc.succ)), loc.fileconn)
   close(loc.fileconn)
   
   
   # Save plot to PNG file
-  #png(filename = loc.png.file.path, width = 700, height = 500, units = 'px')
-  doScatterPlot (loc.data.out, plot.x.arg, plot.y.arg, dat.cellid.arg, in.class.arg, loc.png.file.path)
-  #dev.off()
-  
+  doScatterPlot (loc.data.out, plot.x.arg, plot.y.arg, dat.cellid.arg, in.class.arg, save.file = loc.png.file.path)
+
   
   # Save dataset with classes assigned by decision tree to CSV file
   write.csv(loc.data.out, loc.csv.file.path)
@@ -260,11 +256,11 @@ cv = function (x) {
 # INPUT: data set consisting of grouping attributes (ID, class) + several features across the columns
 addDifferencesAndAggregate = function (in.data, in.class.arg) {
   loc.data <- in.data %>%
-    group_by_(dat.cellid.arg, in.class.arg) %>%
-    mutate_each(funs(diffs = c(NA, diff(.)))) %>%
+    dplyr::group_by_(dat.cellid.arg, in.class.arg) %>%
+    dplyr::mutate_each(funs(diffs = c(NA, diff(.)))) %>%
     na.omit() %>%
-    summarise_each(funs(col.cv = cv(.), col.mn = mean(.))) %>%
-    ungroup()
+    dplyr::summarise_each(funs(col.cv = cv(.), col.mn = mean(.))) %>%
+    dplyr::ungroup()
   
   loc.data <- data.frame(loc.data)
   
@@ -297,7 +293,7 @@ scaleFeatures = function (in.data, in.class.arg) {
   loc.data <- in.data
   loc.scale.cols <- setdiff(names(loc.data), c(dat.cellid.arg, in.class.arg))
   loc.data <- loc.data %>% 
-    mutate_at(loc.scale.cols, myScaleFunction)
+    dplyr::mutate_at(loc.scale.cols, myScaleFunction)
   
   return(loc.data)
   

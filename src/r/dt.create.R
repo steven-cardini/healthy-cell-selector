@@ -56,9 +56,7 @@ summary(dt.gini)
 evaluateDecisionTree (dt.gini, input.training.file.name, input.training.class.arg, input.file.alias[input.training.file.name])
 
 # Evaluate decision tree with testing datasets
-evaluateDecisionTree (dt.gini, input.testing.files.name[2], input.testing.class.arg, input.file.alias[input.testing.files.name[2]])
-
-
+evaluateDecisionTree (dt.gini, input.testing.files.name[3], input.testing.class.arg, input.file.alias[input.testing.files.name[3]])
 
 for (t in 1:length(input.testing.files.name))
   evaluateDecisionTree (dt.gini, input.testing.files.name[t], input.testing.class.arg, input.file.alias[input.testing.files.name[t]])
