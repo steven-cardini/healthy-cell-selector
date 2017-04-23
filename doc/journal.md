@@ -10,6 +10,10 @@
 
 # Project Journal
 
+## 23.04.2017
+16:00 - 20:00
+- Rewrote scripts to enable generic evaluation of different decision tree input
+
 ## 22.04.2017
 16:30 - 19:30
 - Added generic function to evaluate a decision tree with a given test dataset
