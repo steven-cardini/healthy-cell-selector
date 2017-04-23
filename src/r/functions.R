@@ -57,8 +57,11 @@ importTrainingDataset = function (in.file.name, in.class.arg) {
     dplyr::arrange_(.dots = c(dat.cellid.arg, dat.timepoint.arg)) %>% 
     dplyr::select(-dplyr::one_of(dat.timepoint.arg))
   
-  # Add differences between time points as new features and aggregate features for each cell
-  loc.data <- addDifferencesAndAggregate(loc.data, in.class.arg)
+  # Add differences between time points as new features
+  loc.data <- addTimeValueDifferences(loc.data, in.class.arg)
+  
+  #  Aggregate features for each cell
+  loc.data <- aggregateTimeCourses(loc.data, in.class.arg)
   
   # Label cells FALSE if any of the features is an outlier (< 0.001 quantile OR > 0.999 quantile)
   loc.data <- labelOutliersAsFalse(loc.data, in.class.arg, 0.001, 0.999)
@@ -83,8 +86,11 @@ importTestDataset = function (in.file.name, in.class.arg) {
     dplyr::arrange_(.dots = c(dat.cellid.arg, dat.timepoint.arg)) %>% 
     dplyr::select(-dplyr::one_of(dat.timepoint.arg))
   
-  # Add differences between time points as new features and aggregate features for each cell
-  loc.data <- addDifferencesAndAggregate(loc.data, in.class.arg)
+  # Add differences between time points as new features
+  loc.data <- addTimeValueDifferences(loc.data, in.class.arg)
+  
+  #  Aggregate features for each cell
+  loc.data <- aggregateTimeCourses(loc.data, in.class.arg)
   
   # Scale the features
   loc.data <- scaleFeatures(loc.data, in.class.arg)
@@ -157,6 +163,8 @@ evaluateDecisionTree = function (in.dt, in.file.name, in.class.arg, in.file.alia
   loc.class.prob <- predict(in.dt, loc.data.test) # probabilities of class assignment
   loc.class.pred <- loc.class.prob[,'healthy']>0.5 # classes predicted by decision tree
   loc.conf.matrix <- table(loc.class.pred, loc.class.act)
+  
+  assign("conf.mat", loc.conf.matrix, envir = .GlobalEnv)
   
   # Test that confusion matrix is 4x4
   stopifnot(dim(loc.conf.matrix)[1] == 2)
@@ -254,17 +262,28 @@ cv = function (x) {
 }
 
 # INPUT: data set consisting of grouping attributes (ID, class) + several features across the columns
-addDifferencesAndAggregate = function (in.data, in.class.arg) {
+addTimeValueDifferences = function (in.data, in.class.arg) {
   loc.data <- in.data %>%
     dplyr::group_by_(dat.cellid.arg, in.class.arg) %>%
-    dplyr::mutate_each(funs(diffs = c(NA, diff(.)))) %>%
+    dplyr::mutate_each(funs(diffs = c(NA, abs(diff(.))))) %>%
     na.omit() %>%
-    dplyr::summarise_each(funs(col.cv = cv(.), col.mn = mean(.))) %>%
     dplyr::ungroup()
   
   loc.data <- data.frame(loc.data)
   
   return(loc.data)
+}
+
+aggregateTimeCourses = function (in.data, in.class.arg) {
+  
+  loc.data <- in.data %>%
+    dplyr::group_by_(dat.cellid.arg, in.class.arg) %>%
+    # dplyr::summarise_each(funs(col.cv = cv(.), col.avg = mean(.))) %>%
+    dplyr::summarise_each(funs(col.avg = mean(.), col.var = var(.), col.min = min(.), col.max = max(.))) %>%
+    dplyr::ungroup()
+  
+  return (loc.data)
+  
 }
 
 labelOutliersAsFalse = function (in.data, in.class.arg, in.quantile.lower, in.quantile.upper) {
