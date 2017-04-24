@@ -86,7 +86,8 @@ evaluateDecisionTree = function (dec.tree, data.params) {
   res.file.path <- paste0(G.result.files.path, G.experiment.id, '/')
   res.file.name <- paste0(G.experiment.id, '_', data.params$file.alias)
   pdf.file.path <- paste0(res.file.path, G.experiment.id, '_dt.pdf')
-  txt.file.path <- paste0(res.file.path, res.file.name, '.txt')
+  txt.info.file.path <- paste0(res.file.path, G.experiment.id, '_info.txt')
+  txt.stats.file.path <- paste0(res.file.path, res.file.name, '.txt')
   png.file.path <- paste0(res.file.path, res.file.name, '.png')
   csv.file.path <- paste0(res.file.path, res.file.name, '.csv')
   
@@ -94,6 +95,8 @@ evaluateDecisionTree = function (dec.tree, data.params) {
   if(!dir.exists(res.file.path)) {
     # create the experiment folder in results/
     dir.create(res.file.path)
+    # save experiment information
+    saveExperimentInfo(txt.info.file.path)
     # save the decision tree
     pdf(file = pdf.file.path)
     prp(dec.tree, under = TRUE, varlen = 0)
@@ -109,8 +112,8 @@ evaluateDecisionTree = function (dec.tree, data.params) {
   stopifnot(dim(conf.matrix)[1] == 2)
   stopifnot(dim(conf.matrix)[2] == 2)
   
-  # Save information and statistics to txt file
-  saveInfoAndStatistics(data.params, conf.matrix, txt.file.path)
+  # Get success rate and save statistics to txt file
+  succ.rate <- getStatistics(data.params, conf.matrix, txt.stats.file.path)
   
   # Add predicted class labels to output dataset and save it to CSV file
   data.temp <- data.frame(c1 = as.integer(names(class.pred)), c2 = class.pred)
@@ -122,6 +125,9 @@ evaluateDecisionTree = function (dec.tree, data.params) {
   
   # Save plot to PNG file
   saveScatterPlot (data.out, G.plot.x.arg, G.plot.y.arg, G.cellid.arg, data.params$class.attr, file.name = png.file.path)
+  
+  # Return the success rate
+  return(succ.rate)
   
 }
 
@@ -235,7 +241,22 @@ scaleFeatures = function (in.data, in.class.arg) {
 }
 
 
-saveInfoAndStatistics = function (in.params, in.conf.matrix, in.file.path) {
+saveExperimentInfo = function (in.file.path) {
+  fileconn <- file(in.file.path)
+  writeLines(c(paste0('Timestamp: ', Sys.time()),
+               '--------------------------------',
+               paste0('Decision tree params: ', paste0(paste(names(G.dt.params), G.dt.params, sep = ' = '), collapse = ' / ')), 
+               paste0('Features included: ', G.feature.include.regex),
+               paste0('Features excluded: ', G.feature.exclude.regex),
+               paste0('Time differences as features: ', G.feat.timediffs),
+               paste0('Aggregate functions: ', paste0(G.feat.aggr.fun, collapse = ' / ')),
+               paste0('Features were scaled: ', G.feat.scale)),
+             fileconn)
+  close(fileconn)
+}
+
+
+getStatistics = function (in.params, in.conf.matrix, in.file.path) {
   # Calculate statistics
   tp <- in.conf.matrix['TRUE', 'TRUE'] # true positives
   fp <- in.conf.matrix['TRUE', 'FALSE'] # false positives
@@ -254,10 +275,6 @@ saveInfoAndStatistics = function (in.params, in.conf.matrix, in.file.path) {
                paste0('Label Outliers: ', in.params$label.outliers),
                paste0('Upper quantile bound: ', in.params$upper.bound),
                paste0('Lower quantile bound: ', in.params$lower.bound),
-               paste0('Time differences as features: ', G.feat.timediffs),
-               paste0('Aggregate functions: ', paste0(G.feat.aggr.fun, collapse = ' / ')),
-               paste0('Features were scaled: ', G.feat.scale),
-               paste0('Decision tree params: ', paste0(paste(names(G.dt.params), G.dt.params, sep = ' = '), collapse = ' / ')),
                '--------------------------------',
                paste0("TP: ", tp), 
                paste0("TN: ", tn), 
@@ -268,6 +285,9 @@ saveInfoAndStatistics = function (in.params, in.conf.matrix, in.file.path) {
                paste0("Success Rate: ", succ)), 
              fileconn)
   close(fileconn)
+  
+  # Return success rate 
+  return(succ)
 }
 
 

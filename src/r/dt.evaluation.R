@@ -97,10 +97,15 @@ dec.tree <- rpart(formula = fRpart, data = data.training, parms = G.dt.params)
 #summary(dec.tree)
 
 # Evaluate decision tree with training dataset
-evaluateDecisionTree(dec.tree, train.data.info)
+succ.rate.0 <- evaluateDecisionTree(dec.tree, train.data.info)
 
 # Evaluate decision tree with test datasets
-evaluateDecisionTree(dec.tree, test.data.1.info)
-evaluateDecisionTree(dec.tree, test.data.2.info)
-evaluateDecisionTree(dec.tree, test.data.3.info)
+succ.rate.1 <- evaluateDecisionTree(dec.tree, test.data.1.info)
+succ.rate.2 <- evaluateDecisionTree(dec.tree, test.data.2.info)
+succ.rate.3 <- evaluateDecisionTree(dec.tree, test.data.3.info)
   
+# Print the mean success rate as info
+succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
+sprintf('Mean Success Rate: %f', succ.rate.mean)
+
+
