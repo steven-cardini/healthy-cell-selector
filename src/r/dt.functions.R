@@ -214,7 +214,7 @@ addTimeValueDifferences = function (in.data, in.class.arg) {
 aggregateTimeCourses = function (in.data, in.class.arg) {
   data <- in.data %>%
     dplyr::group_by_(G.cellid.arg, in.class.arg) %>%
-    dplyr::summarise_each(funs = G.feat.aggr.fun) %>%
+    dplyr::summarise_all(.funs = G.feat.aggr.fun) %>%
     dplyr::ungroup()
   
   return (data)
