@@ -1,14 +1,20 @@
 # Plan for upcoming Weeks
 
-## Week 16
-- Evaluate decision tree / naive bayesian with new features (time point differences); use only values from time point 10 on (?)
-- Try another approach based on statistics (classify cells outside a defined quantile range as unhealthy)
+## Week 18
+- Finish box plots
+- look into AIC / BIC
+- Maybe add feature: comparison after treatment to before treatment
 
-## Week 17
-- Continue work from week 15
+## Week 19
+- Continue work from week 18
 - Maybe continue with another approach (Support Vector Machines?)
 
 # Project Journal
+
+## 27.04.2017
+13:15 - 18:45
+- Added function to label outliers globally across all features (after scaling)
+- Started to create box plot of scaled features
 
 ## 23.04.2017
 16:00 - 20:00
