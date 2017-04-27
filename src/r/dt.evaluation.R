@@ -20,22 +20,25 @@ G.dt.params <- list(
 
 G.feat.timediffs <- TRUE
 G.feat.scale <- TRUE
-G.feat.aggr.fun <- c('mean', 'cv')
+G.label.outliers.mode <- 'global' 
+G.feat.aggr.fun <- c('mean', 'var', 'min', 'max')
+
+
 
 train.data.info <- list(
   file.name = '20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv',
   file.alias = 'dataset.training',
   class.attr = 'mid.in.man',
-  label.outliers = FALSE,
-  upper.bound = 0.999,
-  lower.bound = 0.001
+  label.outliers = 'global', # global: look at all features together, individual: look at features individually, none: no relabeling
+  upper.bound = 0.998,
+  lower.bound = 0.002
 )
 
 test.data.1.info <- list(
   file.name = '20170228_test_multipulses_30min_break.csv',
   file.alias = 'dataset.test.30min',
   class.attr = 'mid.in',
-  label.outliers = FALSE,
+  label.outliers = 'none',
   upper.bound = NA,
   lower.bound = NA
 )
@@ -44,7 +47,7 @@ test.data.2.info <- list(
   file.name = '20170228_test_multipulses_45min_break.csv',
   file.alias = 'dataset.test.45min',
   class.attr = 'mid.in',
-  label.outliers = FALSE,
+  label.outliers = 'none',
   upper.bound = NA,
   lower.bound = NA
 )
@@ -53,7 +56,7 @@ test.data.3.info <- list(
   file.name = '20170228_test_multipulses_60min_break.csv',
   file.alias = 'dataset.test.60min',
   class.attr = 'mid.in',
-  label.outliers = FALSE,
+  label.outliers = 'none',
   upper.bound = NA,
   lower.bound = NA
 )

@@ -47,13 +47,17 @@ getFeatureDataset = function (data.params) {
   # Aggregate features for each cell
   data <- aggregateTimeCourses(data, data.params$class.attr)
   
-  # If requested, label cell class FALSE if any of its aggregated features is an outlier
-  if (data.params$label.outliers)
-    data <- labelOutliersAsFalse(data, data.params$class.attr, data.params$lower.bound, data.params$upper.bound)
+  # If requested, label cell class FALSE if any of its aggregated features is an outlier (individually per feature)
+  if (data.params$label.outliers == 'individual')
+    data <- labelOutliersPerFeature(data, data.params$class.attr, data.params$lower.bound, data.params$upper.bound)
   
   # If requested, scale the features
   if (G.feat.scale)
     data <- scaleFeatures(data, data.params$class.attr)
+  
+  # If requested, label cell class FALSE if any of its aggregated features is an outlier (globally over all features)
+  if (data.params$label.outliers == 'global')
+    data <- labelOutliersOverAllFeatures(data, data.params$class.attr, data.params$lower.bound, data.params$upper.bound)
   
   data <- as.data.frame(data)
   
@@ -221,13 +225,47 @@ aggregateTimeCourses = function (in.data, in.class.arg) {
 }
 
 
-labelOutliersAsFalse = function (in.data, in.class.arg, in.quantile.lower, in.quantile.upper) {
+# function: for each feature, label outliers (above in.quantile.upper or below in.quantile.lower) as FALSE
+labelOutliersPerFeature = function (in.data, in.class.arg, in.quantile.lower, in.quantile.upper) {
   data <- in.data
   features <- setdiff(names(data), c(G.cellid.arg, in.class.arg))
   setDT(data)[,  (in.class.arg) := Reduce(`&`, lapply(.SD, function(x) x < quantile(x, in.quantile.upper) & 
                                                             x > quantile(x, in.quantile.lower))), .SDcols = features]
   
   return(data)
+}
+
+
+# function: label outliers globally across all features (above in.quantile.upper or below in.quantile.lower) as FALSE
+# input data should be scaled!
+labelOutliersOverAllFeatures = function (data, class.arg, quantile.lower, quantile.upper) {
+  features <- setdiff(names(data), c(G.cellid.arg, class.arg))
+  
+  
+  # create a melted data.table
+  data.dt <- data %>% 
+    select(-get(class.arg)) %>%
+    as.data.table() %>%
+    melt(id.vars = G.cellid.arg, variable.name = 'feat', value.name = 'val')
+  
+  # determine cut boundaries
+  bound.lower <- quantile(data.dt[,val], quantile.lower)
+  bound.upper <- quantile(data.dt[,val], quantile.upper)
+  
+  assign("bound.lower", bound.lower, envir = .GlobalEnv)
+  assign("bound.upper", bound.upper, envir = .GlobalEnv)
+  
+ 
+  # get cell_Ids where any feature is below bound.lower or bound.upper
+  ids.relabel <- data.dt[val<bound.lower | val>bound.upper, get(G.cellid.arg)]
+  
+  assign("ids.relabel", ids.relabel, envir = .GlobalEnv)
+  
+  # relabel class of those ids
+  data <- as.data.table(data)
+  data[get(G.cellid.arg) %in% ids.relabel, (class.arg) := FALSE]
+  
+  return(as.data.frame(data))
 }
 
 
