@@ -1,0 +1,8 @@
+Timestamp: 2017-04-27 17:11:34
+--------------------------------
+Decision tree params: split = gini
+Features included: ^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*
+Features excluded: .*(EulerNumber)+.*
+Time differences as features: TRUE
+Aggregate functions: mean / var / min / max
+Features were scaled: TRUE

@@ -1,0 +1,15 @@
+Timestamp: 2017-04-27 17:12:04
+--------------------------------
+Test Dataset: 20170228_test_multipulses_60min_break.csv
+Class Attribute: mid.in
+Label Outliers: none
+Upper quantile bound: NA
+Lower quantile bound: NA
+--------------------------------
+TP: 64
+TN: 4
+FP: 9
+FN: 6
+TPR: 0.914285714285714
+FPR: 0.692307692307692
+Success Rate: 0.819277108433735
