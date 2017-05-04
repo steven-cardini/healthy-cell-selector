@@ -20,8 +20,9 @@ G.dt.params <- list(
 
 G.feat.timediffs <- TRUE
 G.feat.scale <- TRUE
-G.label.outliers.mode <- 'global' 
-G.feat.aggr.fun <- c('mean', 'var', 'min', 'max')
+G.label.outliers.mode <- 'global'
+G.save.outliers.boxplot <- TRUE
+G.feat.aggr.fun <- c('var', 'mean', 'min', 'max')
 
 
 
