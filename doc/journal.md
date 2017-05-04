@@ -1,15 +1,17 @@
 # Plan for upcoming Weeks
 
-## Week 18
-- Finish box plots
-- look into AIC / BIC
+## Week 19
+- Continue work with Naive Bayesian
 - Maybe add feature: comparison after treatment to before treatment
 
-## Week 19
-- Continue work from week 18
+## Week 20
 - Maybe continue with another approach (Support Vector Machines?)
 
 # Project Journal
+
+## 04.05.2017
+14:00 - 16:00
+- Added code to save boxplots of the (normalized) features, and visualize outliers' paths across the boxplots
 
 ## 27.04.2017
 13:15 - 18:45
