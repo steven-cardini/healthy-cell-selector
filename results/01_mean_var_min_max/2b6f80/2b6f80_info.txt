@@ -1,0 +1,9 @@
+Timestamp: 2017-05-11 16:53:18
+--------------------------------
+Model: NaiveBayes
+Model params: none
+Features included: ^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*
+Features excluded: .*(EulerNumber)+.*
+Time differences as features: TRUE
+Aggregate functions: var / mean / min / max
+Features were scaled: TRUE

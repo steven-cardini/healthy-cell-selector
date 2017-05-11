@@ -1,8 +1,0 @@
-Input dataset: 20170228_test_multipulses_45min_break.csv
-TP: 26
-TN: 39
-FP: 31
-FN: 14
-TPR: 0.65
-FPR: 0.442857142857143
-Success Rate: 0.590909090909091
