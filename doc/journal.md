@@ -1,13 +1,22 @@
 # Plan for upcoming Weeks
 
-## Week 19
-- Continue work with Naive Bayesian
+## Week 20
+- Continue work on Wilcox Test for outliers' features vs. positives' features
+- Add support vector machine classifier
+
+## Week 21
 - Maybe add feature: comparison after treatment to before treatment
 
-## Week 20
-- Maybe continue with another approach (Support Vector Machines?)
-
 # Project Journal
+
+## 11.05.2017
+13:15 - 18:30
+- made code more generic and integrated Naive Bayes evaluation
+- started working on Wilcox Test for outliers' features vs. positives' features
+
+## 05.05.2017
+15:45 - 16:15
+- Project Meeting with Prof. B Anrig
 
 ## 04.05.2017
 14:00 - 16:00
