@@ -5,25 +5,30 @@
 ##############################################################################
 
 setwd("C:/Code/eclipse-workspaces/java/healthy-cell-selector")
-source("src/r/dt.functions.R")
+source("src/r/func.general.R")
+source("src/r/func.dataimport.R")
+source("src/r/func.evaluation.R")
+# general R libraries
+library(dplyr)
+library(data.table) 
+library(ggplot2)
+library(plotly)
+# libraries for Decision Tree
+library(rpart)
+library(rpart.plot)
+# library for Naive Bayes
+require(klaR)
 
 
 #################################################
 # EXPERIMENT PARAMETERS
 #################################################
 
-G.experiment.id <- createExperimentId()
-
-G.dt.params <- list(
-  split="gini"
-)
-
 G.feat.timediffs <- TRUE
 G.feat.scale <- TRUE
 G.label.outliers.mode <- 'global'
 G.save.outliers.boxplot <- TRUE
 G.feat.aggr.fun <- c('var', 'mean', 'min', 'max')
-
 
 
 train.data.info <- list(
@@ -88,28 +93,65 @@ G.plot.y.arg <- 'objCell_Intensity_MeanIntensity_imErkCorrOrig'
 
 # Import training dataset for decision tree and change class labels
 data.training <- getFeatureDataset(train.data.info)
-data.training <- data.training %>% 
-  dplyr::mutate_at(funs(replace(., . == TRUE, 'healthy')), .cols = train.data.info$class.attr) %>% 
-  dplyr::mutate_at(funs(replace(., . == FALSE, 'unhealthy')), .cols = train.data.info$class.attr)
+
+
+######################
+# Decision Tree
+######################
+
+initializeExperiment('DecisionTree')
 
 # Create formula from class variable for the decision tree
-fRpart <- as.formula(paste(train.data.info$class.attr, '.', sep=" ~ "))
+dt.formula <- as.formula(paste(train.data.info$class.attr, '.', sep=" ~ "))
+dt.params <- list(
+  split="gini"
+)
+
 
 # To weigh the classes see: https://stackoverflow.com/questions/8717493/using-minsplit-and-unequal-weights-in-rpart
-# Construct decision tree
-dec.tree <- rpart(formula = fRpart, data = data.training, parms = G.dt.params)
-#summary(dec.tree)
+# Construct decision tree model
+dt.model <- rpart(formula = dt.formula, data = data.training, parms = dt.params)
+
+# Save experiment information
+dt.params.string <- paste0(paste(names(dt.params), dt.params, sep = ' = '), collapse = ' / ')
+saveExperimentInfo(dt.params.string)
+saveDecisionTree(dt.model)
 
 # Evaluate decision tree with training dataset
-succ.rate.0 <- evaluateDecisionTree(dec.tree, train.data.info)
+succ.rate.0 <- evaluateModel(dt.model, train.data.info)
 
 # Evaluate decision tree with test datasets
-succ.rate.1 <- evaluateDecisionTree(dec.tree, test.data.1.info)
-succ.rate.2 <- evaluateDecisionTree(dec.tree, test.data.2.info)
-succ.rate.3 <- evaluateDecisionTree(dec.tree, test.data.3.info)
-  
+succ.rate.1 <- evaluateModel(dt.model, test.data.1.info)
+succ.rate.2 <- evaluateModel(dt.model, test.data.2.info)
+succ.rate.3 <- evaluateModel(dt.model, test.data.3.info)
+
 # Print the mean success rate as info
 succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
 sprintf('Mean Success Rate: %f', succ.rate.mean)
 
 
+######################
+# Naive Bayes
+######################
+
+initializeExperiment('NaiveBayes')
+
+# Create formula from class variable for the Naive Bayes
+nb.formula <- as.formula(paste0('as.factor(', train.data.info$class.attr, ') ~ .'))
+  
+nb.model <- NaiveBayes(formula = nb.formula, data = data.training)
+
+# Save experiment information
+saveExperimentInfo()
+
+# Evaluate decision tree with training dataset
+succ.rate.0 <- evaluateModel(nb.model, train.data.info)
+
+# Evaluate decision tree with test datasets
+succ.rate.1 <- evaluateModel(nb.model, test.data.1.info)
+succ.rate.2 <- evaluateModel(nb.model, test.data.2.info)
+succ.rate.3 <- evaluateModel(nb.model, test.data.3.info)
+
+# Print the mean success rate as info
+succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
+sprintf('Mean Success Rate: %f', succ.rate.mean)
