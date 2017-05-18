@@ -1,18 +1,24 @@
 # Plan for upcoming Weeks
 
-## Week 20
-- Continue work on Wilcox Test for outliers' features vs. positives' features
-- Add support vector machine classifier
-
 ## Week 21
+- Add support vector machine classifier
+- Reduce amount of FALSE POSITIVES predicted by classifiers
+- Evaluate classifiers based on manually annotated test datasets
+
+## Week 22
 - Maybe add feature: comparison after treatment to before treatment
 
 # Project Journal
 
+## 18.05.2017
+14:15 - 18:15
+- finished work on Wilcoxon tests for outliers' features vs. non-outliers' features
+- implemented function to evaluate a dataset generically (make boxplots of features, calculate Wilcoxon tests of outliers vs. non-outliers for each feature)
+
 ## 11.05.2017
 13:15 - 18:30
 - made code more generic and integrated Naive Bayes evaluation
-- started working on Wilcox Test for outliers' features vs. positives' features
+- started working on Wilcox Test for outliers' features vs. non-outliers' features
 
 ## 05.05.2017
 15:45 - 16:15
