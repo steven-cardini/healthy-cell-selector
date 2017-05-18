@@ -16,7 +16,7 @@
 # returns a data.frame containing cell_Id, class and aggregated features 
 # per cell from a CSV, as specified by data.params
 ##############################################################################
-getFeatureDataset = function (data.params) {
+getFeatureDataset = function (data.params, stats.save.paths = NA) {
   
   # Import raw features from file and add cell_Id
   data <- importDataFromFile(data.params$file.name, data.params$class.attr)
@@ -47,7 +47,7 @@ getFeatureDataset = function (data.params) {
   
   # If requested, label cell class FALSE if any of its aggregated features is an outlier (globally over all features)
   if (data.params$label.outliers == 'global')
-    data <- labelOutliersOverAllFeatures(data, data.params$class.attr, data.params$lower.bound, data.params$upper.bound)
+    data <- labelOutliersOverAllFeatures(data, data.params, stats.save.paths)
   
   data <- as.data.frame(data)
   
@@ -164,51 +164,94 @@ labelOutliersPerFeature = function (in.data, in.class.arg, in.quantile.lower, in
 # OUT: 
 # label outliers globally across all features (above in.quantile.upper or below in.quantile.lower) as FALSE
 ##############################################################################
-labelOutliersOverAllFeatures = function (data, class.arg, quantile.lower, quantile.upper) {
-  features <- setdiff(names(data), c(G.cellid.arg, class.arg))
+labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = NA) {
+  features <- setdiff(names(data), c(G.cellid.arg, data.params$class.attr))
   
   # create a melted data.table
   data.melted <- data %>% 
-    dplyr::select(-get(class.arg)) %>%
+    dplyr::select(-get(data.params$class.attr)) %>%
     as.data.table() %>%
     melt(id.vars = G.cellid.arg, variable.name = 'feature', value.name = 'value')
   
   # determine cut boundaries
-  bound.lower <- quantile(data.melted[,value], quantile.lower)
-  bound.upper <- quantile(data.melted[,value], quantile.upper)
+  bound.lower <- quantile(data.melted[,value], data.params$lower.bound)
+  bound.upper <- quantile(data.melted[,value], data.params$upper.bound)
   
   # get cell_Ids where any feature is below bound.lower or bound.upper
-  ids.relabel <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)]
+  ids.outliers <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
+    unique() %>%
+    sort()
   
   # relabel class of those ids
   data <- as.data.table(data)
-  data[get(G.cellid.arg) %in% ids.relabel, (class.arg) := FALSE]
+  data[get(G.cellid.arg) %in% ids.outliers, (data.params$class.attr) := FALSE]
+
+  # IF dataset information should not be saved, return the dataset
+  if (!is.list(stats.save.paths))
+    return(as.data.frame(data))
   
-  # if desired, make box plots of the features, add paths of the outliers and save it
-  if (G.save.outliers.boxplot) {
-    data.feats <- data.melted[ !(feature %like% "diffs") ]
-    data.feats.outliers <- data.feats[get(G.cellid.arg) %in% ids.relabel]
-    ggplot() + 
-      ggtitle(paste0("Outliers of quantile ", quantile.lower, " - ", quantile.upper)) +
-      geom_boxplot(data = data.feats, aes(feature, value)) + 
-      geom_path(data = data.feats.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
-      coord_flip()  
-    ggsave(paste0('feats.outliers.',quantile.lower,'-',quantile.upper,'.pdf'), width = 16, height = 40)
+  # ELSE get dataset statistics and save them to files
+  saveDatasetInfo(data.params, stats.save.paths$params.info)
+  
+  # subdivide melted data into outlier values and non-outlier values
+  outliers.values <- data.melted[value<bound.lower | value>bound.upper,]
+  nonoutliers.values <- data.melted[value>=bound.lower & value<=bound.upper,]
+  
+  #########################
+  # WILCOXON TESTS OF OUTLIERS VS. NON-OUTLIERS
+  #########################
+  # calculate Wilcoxon tests
+  n <- length(features)
+  wilcox.values <- data.frame(statistic = numeric(length = n), pvalue = numeric(length = n), 
+                              outliers = numeric(length = n), nonoutliers = numeric(length = n))
+  row.names(wilcox.values) <- features
+  for(colname in features) {
+    x <- outliers.values[feature == colname]$value
+    y <- nonoutliers.values[feature == colname]$value
+    wilcox.values[colname, "outliers"] <- length(x)
+    wilcox.values[colname, "nonoutliers"] <- length(y)
     
-    # save also the diff features, if enabled
-    if (G.feat.timediffs) {
-      data.diffs <- data.melted[ feature %like% "diffs" ]
-      data.diffs.outliers <- data.diffs[get(G.cellid.arg) %in% ids.relabel]
-      ggplot() +
-        ggtitle(paste0("Outliers of quantile ", quantile.lower, " - ", quantile.upper)) +
-        geom_boxplot(data = data.diffs, aes(feature, value)) + 
-        geom_path(data = data.diffs.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
-        coord_flip()  
-      ggsave(paste0('diffs.outliers.',quantile.lower,'-',quantile.upper,'.pdf'), width = 16, height = 40)
+    if (length(x)==0 | length(y)==0) { # not enough (or only) outliers
+      wilcox.values[colname, "statistic"] <- NA
+      wilcox.values[colname, "pvalue"] <- NA
+    } else {
+      w <- wilcox.test(x, y, paired = FALSE)
+      wilcox.values[colname, "statistic"] <- w$statistic
+      wilcox.values[colname, "pvalue"] <- w$p.value
     }
-    
   }
   
+  # sort by p-value and save results of Wilcoxon tests
+  wilcox.values <- cbind(feature=row.names(wilcox.values), wilcox.values) # preserve features from row names
+  wilcox.values <- wilcox.values %>%
+    arrange(pvalue)
+  write.csv(wilcox.values, stats.save.paths$wilcox.tests)
+  
+  #########################
+  # BOXPLOTS OF THE FEATURES
+  #########################
+  # make box plots of the features, add paths of the outliers and save it
+  data.feats <- data.melted[ !(feature %like% "diffs") ]
+  data.feats.outliers <- data.feats[get(G.cellid.arg) %in% ids.outliers]
+  ggplot() + 
+    ggtitle(paste0("Outliers of quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    geom_boxplot(data = data.feats, aes(feature, value)) + 
+    geom_path(data = data.feats.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
+    coord_flip()  
+  ggsave(stats.save.paths$feats.boxplots, width = 16, height = 40)
+
+  # save also the diff features, if enabled
+  if (G.feat.timediffs) {
+    data.diffs <- data.melted[ feature %like% "diffs" ]
+    data.diffs.outliers <- data.diffs[get(G.cellid.arg) %in% ids.outliers]
+    ggplot() +
+      ggtitle(paste0("Outliers of quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+      geom_boxplot(data = data.diffs, aes(feature, value)) + 
+      geom_path(data = data.diffs.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
+      coord_flip()  
+    ggsave(stats.save.paths$diffs.boxplots, width = 16, height = 40)
+  }
+    
   return(as.data.frame(data))
 }
 

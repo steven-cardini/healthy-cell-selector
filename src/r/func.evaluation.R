@@ -12,6 +12,15 @@
 #########################################################################################################################
 
 
+###### evaluateDataset #######################################################
+# returns 
+##############################################################################
+evaluateDataset = function (data.params) {
+  paths <- getDatasetFilePaths(data.params)
+  data.eval <- getFeatureDataset(data.params, paths)
+}
+
+
 ###### evaluateModel #########################################################
 # returns 
 ##############################################################################
@@ -36,7 +45,7 @@ evaluateModel = function (class.model, data.params) {
     dplyr::select(-get(data.params$class.attr))
   
   # Initialize paths for output files
-  filepaths <- getFilePaths(data.params)
+  filepaths <- getExperimentFilePaths(data.params)
   
   # Predict classes of training dataset according to the model and create a confusion matrix / table
   classes.predicted <- getPredictedClasses(class.model, data.test)
@@ -70,17 +79,35 @@ evaluateModel = function (class.model, data.params) {
 #########################################################################################################################
 
 
-###### getFilePaths ##########################################################
+###### getDatasetFilePaths ##########################################################
 # IN: 
 # OUT: 
 ##############################################################################
-getFilePaths = function (data.params) {
+getDatasetFilePaths = function (data.params) {
+  id <- hexId(4)
+  path.prefix <- paste0(G.result.files.path, 'dataset-statistics', '/', id, '_', data.params$file.alias, '_')
+  # initialize file paths
+  paths <- list(
+    params.info = paste0(path.prefix, 'info.txt'),
+    wilcox.tests = paste0(path.prefix, 'wilcoxon_', data.params$lower.bound, '-', data.params$upper.bound, '.csv'),
+    feats.boxplots = paste0(path.prefix, 'boxplots_feats_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots = paste0(path.prefix, 'boxplots_diffs_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf')
+  )
+  return(paths)
+}
+
+
+###### getExperimentFilePaths ##########################################################
+# IN: 
+# OUT: 
+##############################################################################
+getExperimentFilePaths = function (data.params) {
   results.file <- paste0(G.experiment.id, '_', data.params$file.alias)
   # initialize file paths
   paths <- c(stats = paste0(G.experiment.files.path, results.file, '.txt'),
              plot = paste0(G.experiment.files.path, results.file, '.png'),
              data = paste0(G.experiment.files.path, results.file, '.csv')
-  )
+            )
   return(paths)
 }
 

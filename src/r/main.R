@@ -27,9 +27,7 @@ require(klaR)
 G.feat.timediffs <- TRUE
 G.feat.scale <- TRUE
 G.label.outliers.mode <- 'global'
-G.save.outliers.boxplot <- TRUE
 G.feat.aggr.fun <- c('var', 'mean', 'min', 'max')
-
 
 train.data.info <- list(
   file.name = '20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv',

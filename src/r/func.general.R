@@ -26,11 +26,23 @@ cv = function (in.vector) {
 }
 
 
-###### createExperimentId ####################################################
-# generates a random experiment ID
+###### cv ###################################################################
+# IN: vector of numeric data
+# OUT: vector of numeric data
+# Calculates the coefficient of variation (CV) from values in a vector,
+# ignoring NA values
+##############################################################################
+hexId = function (n) {
+  id <- paste0(sample(c(0:9, letters[1:6]), n, replace = TRUE), collapse = '')
+  return(id)
+}
+
+
+###### initializeExperiment ##################################################
+# generates a random experiment ID and initializes an experiment
 ##############################################################################
 initializeExperiment = function (model.type) {
-  exp.id <- paste0(sample(c(0:9, letters[1:6]), 6, replace = TRUE), collapse = '')
+  exp.id <- hexId(6)
   # assign global variables for experiment ID and experiment results file path
   assign("G.experiment.id", exp.id, envir = .GlobalEnv)
   assign("G.experiment.model", model.type, envir = .GlobalEnv)
@@ -39,6 +51,30 @@ initializeExperiment = function (model.type) {
   if(!dir.exists(G.experiment.files.path))
     dir.create(G.experiment.files.path)
   return(exp.id)
+}
+
+
+###### saveDatasetInfo ######################################################
+# IN: 
+# OUT: 
+##############################################################################
+saveDatasetInfo = function (data.params, output.file) {
+  fileconn <- file(output.file)
+  writeLines(c(paste0('Timestamp: ', Sys.time()),
+               '--------------------------------',
+               paste0('Dataset: ', data.params$file.name),
+               paste0('Features included: ', G.feature.include.regex),
+               paste0('Features excluded: ', G.feature.exclude.regex),
+               paste0('Time differences as features: ', G.feat.timediffs),
+               paste0('Aggregate functions: ', paste0(G.feat.aggr.fun, collapse = ' / ')),
+               paste0('Features were scaled: ', G.feat.scale),
+               paste0('Class Attribute: ', data.params$class.attr),
+               paste0('Label Outliers: ', data.params$label.outliers),
+               paste0('Upper quantile bound: ', data.params$upper.bound),
+               paste0('Lower quantile bound: ', data.params$lower.bound)
+              ),
+             fileconn)
+  close(fileconn)
 }
 
 
