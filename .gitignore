@@ -1,7 +1,7 @@
-# Data Folder and CSV files
+# Data Folder and CSV files containing experment data
 /data/
 /results/archive
-*.csv
+*.data.csv
 
 # Test R Files
 *.test.R

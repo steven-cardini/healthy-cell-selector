@@ -106,7 +106,7 @@ getExperimentFilePaths = function (data.params) {
   # initialize file paths
   paths <- c(stats = paste0(G.experiment.files.path, results.file, '.txt'),
              plot = paste0(G.experiment.files.path, results.file, '.png'),
-             data = paste0(G.experiment.files.path, results.file, '.csv')
+             data = paste0(G.experiment.files.path, results.file, '.data.csv')
             )
   return(paths)
 }
