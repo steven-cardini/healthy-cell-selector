@@ -1,14 +1,20 @@
 # Plan for upcoming Weeks
 
-## Week 21
+## Week 22
 - Add support vector machine classifier
 - Reduce amount of FALSE POSITIVES predicted by classifiers
 - Evaluate classifiers based on manually annotated test datasets
 
-## Week 22
-- Maybe add feature: comparison after treatment to before treatment
+## Week 23
+- Write report
 
 # Project Journal
+
+## 24.05.2017
+13:00 - 18:00
+- extended functionality of box plots for dataset evaluation
+- added step plot to visualize the number of discarded cells vs. quantile thresholds
+- changed code such that outliers are chosen only from cells not already kicked out manually
 
 ## 18.05.2017
 14:15 - 18:15
