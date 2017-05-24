@@ -159,7 +159,7 @@ labelOutliersPerFeature = function (in.data, in.class.arg, in.quantile.lower, in
 }
 
 
-###### labelOutliersPerFeature ###############################################
+###### labelOutliersOverAllFeatures ##########################################
 # IN: should be scaled!
 # OUT: 
 # label outliers globally across all features (above in.quantile.upper or below in.quantile.lower) as FALSE
@@ -182,14 +182,18 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
     unique() %>%
     sort()
   
+  assign("amount.discarded", length(ids.outliers), envir = .GlobalEnv)
+  
   # relabel class of those ids
   data <- as.data.table(data)
   data[get(G.cellid.arg) %in% ids.outliers, (data.params$class.attr) := FALSE]
-
+  
+  #######
   # IF dataset information should not be saved, return the dataset
   if (!is.list(stats.save.paths))
     return(as.data.frame(data))
   
+  #######
   # ELSE get dataset statistics and save them to files
   saveDatasetInfo(data.params, stats.save.paths$params.info)
   
@@ -251,7 +255,38 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
       coord_flip()  
     ggsave(stats.save.paths$diffs.boxplots, width = 16, height = 40)
   }
-    
+  
+  #########################
+  # STEP-PLOT DISCARDED CELLS IN FUNCTION OF QUANTILE THRESHOLD
+  #########################
+  # Calculate number of discarded cells for different quantile thresholds
+  quantile.data <- data.frame(x = numeric(), y = numeric())
+  x <- 0.0001
+  y <- 0
+  i <- 1
+  while(y < 0.2*nrow(data)) {
+    bound.lower <- quantile(data.melted[,value], x)
+    bound.upper <- quantile(data.melted[,value], 1-x)
+    y <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
+      unique() %>%
+      length()
+    quantile.data[i,] <- c(x,y)
+    x <- x + 0.0001
+    i <- i+1
+  }
+  # Save plot
+  ggplot(quantile.data, aes(x,y)) + 
+    theme_bw() + 
+    labs(title = "Number of cells discarded in function of quantile threshold", x = "lower quantile threshold", y = "Number of cells discarded") +
+    labs(subtitle = data.params$file.alias) +
+    geom_step() +
+    ggsave(stats.save.paths$discarded.stepplot.raw, width = 6, height = 4) +
+    labs(subtitle = paste0(data.params$file.alias, ' / chosen threshold = (', data.params$lower.bound, ', ', length(ids.outliers) ,')')) +
+    geom_hline(yintercept = length(ids.outliers), color = 'red', linetype = 'dashed') + 
+    geom_vline(xintercept = data.params$lower.bound, color = 'red', linetype = 'dashed') +
+    ggsave(stats.save.paths$discarded.stepplot.marked, width = 6, height = 4)
+  
+  
   return(as.data.frame(data))
 }
 

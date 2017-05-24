@@ -91,7 +91,9 @@ getDatasetFilePaths = function (data.params) {
     params.info = paste0(path.prefix, 'info.txt'),
     wilcox.tests = paste0(path.prefix, 'wilcoxon_', data.params$lower.bound, '-', data.params$upper.bound, '.csv'),
     feats.boxplots = paste0(path.prefix, 'boxplots_feats_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    diffs.boxplots = paste0(path.prefix, 'boxplots_diffs_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf')
+    diffs.boxplots = paste0(path.prefix, 'boxplots_diffs_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    discarded.stepplot.raw = paste0(path.prefix, 'stepplot_discarded.png'),
+    discarded.stepplot.marked = paste0(path.prefix, 'stepplot_discarded_marked.png')
   )
   return(paths)
 }

@@ -34,8 +34,8 @@ train.data.info <- list(
   file.alias = 'dataset.training',
   class.attr = 'mid.in.man',
   label.outliers = 'global', # global: look at all features together, individual: look at features individually, none: no relabeling
-  upper.bound = 0.998,
-  lower.bound = 0.002
+  upper.bound = 0.9992,
+  lower.bound = 0.0008 # kicks out 21 cells, if label.outliers = global
 )
 
 test.data.1.info <- list(
