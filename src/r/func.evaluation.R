@@ -90,8 +90,14 @@ getDatasetFilePaths = function (data.params) {
   paths <- list(
     params.info = paste0(path.prefix, 'info.txt'),
     wilcox.tests = paste0(path.prefix, 'wilcoxon_', data.params$lower.bound, '-', data.params$upper.bound, '.csv'),
-    feats.boxplots = paste0(path.prefix, 'boxplots_feats_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    diffs.boxplots = paste0(path.prefix, 'boxplots_diffs_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    feats.boxplots.1 = paste0(path.prefix, 'boxplots_feats.pdf'),
+    diffs.boxplots.1 = paste0(path.prefix, 'boxplots_diffs.pdf'),
+    feats.boxplots.2 = paste0(path.prefix, 'boxplots_feats_manually_excluded_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots.2 = paste0(path.prefix, 'boxplots_diffs_manually_excluded_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    feats.boxplots.3 = paste0(path.prefix, 'boxplots_feats_outlier-values_only_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots.3 = paste0(path.prefix, 'boxplots_diffs_outlier-values_only_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    feats.boxplots.4 = paste0(path.prefix, 'boxplots_feats_outliers_allvalues_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots.4 = paste0(path.prefix, 'boxplots_diffs_outliers_allvalues_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
     discarded.stepplot.raw = paste0(path.prefix, 'stepplot_discarded.png'),
     discarded.stepplot.marked = paste0(path.prefix, 'stepplot_discarded_marked.png')
   )

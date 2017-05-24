@@ -166,26 +166,39 @@ labelOutliersPerFeature = function (in.data, in.class.arg, in.quantile.lower, in
 ##############################################################################
 labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = NA) {
   features <- setdiff(names(data), c(G.cellid.arg, data.params$class.attr))
+  data <- as.data.table(data)
+  
+  # remove manually kicked out cells from dataset, such that outliers are determined from TRUE cells only
+  data.true <- data[get(data.params$class.attr) == TRUE,]
+  
+  # get cell_Ids of the cells that were manually kicked out due to bad segmentation
+  data.false <- data[get(data.params$class.attr) == FALSE,]
+  ids.manual <- data.false[, get(G.cellid.arg)]
   
   # create a melted data.table
-  data.melted <- data %>% 
+  data.melted <- data %>%
+    dplyr::select(-get(data.params$class.attr)) %>%
+    as.data.table() %>%
+    melt(id.vars = G.cellid.arg, variable.name = 'feature', value.name = 'value')
+  data.true.melted <- data.true %>%
+    dplyr::select(-get(data.params$class.attr)) %>%
+    as.data.table() %>%
+    melt(id.vars = G.cellid.arg, variable.name = 'feature', value.name = 'value')
+  data.false.melted <- data.false %>%
     dplyr::select(-get(data.params$class.attr)) %>%
     as.data.table() %>%
     melt(id.vars = G.cellid.arg, variable.name = 'feature', value.name = 'value')
   
   # determine cut boundaries
-  bound.lower <- quantile(data.melted[,value], data.params$lower.bound)
-  bound.upper <- quantile(data.melted[,value], data.params$upper.bound)
+  bound.lower <- quantile(data.true.melted[,value], data.params$lower.bound)
+  bound.upper <- quantile(data.true.melted[,value], data.params$upper.bound)
   
   # get cell_Ids where any feature is below bound.lower or bound.upper
-  ids.outliers <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
+  ids.outliers <- data.true.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
     unique() %>%
     sort()
   
-  assign("amount.discarded", length(ids.outliers), envir = .GlobalEnv)
-  
   # relabel class of those ids
-  data <- as.data.table(data)
   data[get(G.cellid.arg) %in% ids.outliers, (data.params$class.attr) := FALSE]
   
   #######
@@ -195,11 +208,16 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
   
   #######
   # ELSE get dataset statistics and save them to files
-  saveDatasetInfo(data.params, stats.save.paths$params.info)
+  cell.numbers <- list(
+    total = nrow(data),
+    manual = length(ids.manual),
+    automatic = length(ids.outliers)
+  )
+  saveDatasetInfo(data.params, cell.numbers, stats.save.paths$params.info)
   
   # subdivide melted data into outlier values and non-outlier values
-  outliers.values <- data.melted[value<bound.lower | value>bound.upper,]
-  nonoutliers.values <- data.melted[value>=bound.lower & value<=bound.upper,]
+  outliers.values <- data.true.melted[value<bound.lower | value>bound.upper,]
+  nonoutliers.values <- data.true.melted[value>=bound.lower & value<=bound.upper,]
   
   #########################
   # WILCOXON TESTS OF OUTLIERS VS. NON-OUTLIERS
@@ -234,26 +252,106 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
   #########################
   # BOXPLOTS OF THE FEATURES
   #########################
-  # make box plots of the features, add paths of the outliers and save it
-  data.feats <- data.melted[ !(feature %like% "diffs") ]
-  data.feats.outliers <- data.feats[get(G.cellid.arg) %in% ids.outliers]
+  # prepare plot data
+  data.feats <- data.melted[!(feature %like% "diffs")]
+  data.true.feats <- data.true.melted[!(feature %like% "diffs")]
+  data.true.outliers.feats.all <- data.true.feats[get(G.cellid.arg) %in% ids.outliers]
+  data.true.outliers.feats.vals <- outliers.values[ !(feature %like% "diffs") ]
+  data.false.feats <- data.false.melted[!(feature %like% "diffs")]
+  if (G.feat.timediffs) {
+    data.diffs <- data.melted[feature %like% "diffs"]
+    data.true.diffs <- data.true.melted[feature %like% "diffs"]
+    data.true.outliers.diffs.all <- data.true.diffs[get(G.cellid.arg) %in% ids.outliers]
+    data.true.outliers.diffs.vals <- outliers.values[ feature %like% "diffs" ]
+    data.false.diffs <- data.false.melted[feature %like% "diffs"]
+  }
+  ##########
+  # Nr. 1: boxplot of all features
+  ########
   ggplot() + 
-    ggtitle(paste0("Outliers of quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    ggtitle("Boxplot of features over all cells") +
+    theme_bw() +
     geom_boxplot(data = data.feats, aes(feature, value)) + 
-    geom_path(data = data.feats.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
-    coord_flip()  
-  ggsave(stats.save.paths$feats.boxplots, width = 16, height = 40)
-
+    coord_flip()
+  ggsave(stats.save.paths$feats.boxplots.1, width = 16, height = 40)
   # save also the diff features, if enabled
   if (G.feat.timediffs) {
-    data.diffs <- data.melted[ feature %like% "diffs" ]
-    data.diffs.outliers <- data.diffs[get(G.cellid.arg) %in% ids.outliers]
-    ggplot() +
-      ggtitle(paste0("Outliers of quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    ggplot() + 
+      ggtitle("Boxplot of features over all cells") +
+      theme_bw() +
       geom_boxplot(data = data.diffs, aes(feature, value)) + 
-      geom_path(data = data.diffs.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
+      coord_flip()
+    ggsave(stats.save.paths$diffs.boxplots.1, width = 16, height = 40)
+  }
+  ##########
+  # Nr. 2: highlight feature values of manually kicked out cells
+  ########
+  ggplot() + 
+    ggtitle("Manually kicked out cells") +
+    theme_bw() +
+    geom_boxplot(data = data.feats, aes(feature, value)) + 
+    geom_point(data = data.false.feats, aes(feature, value, size = 2), color = "blue", shape = 3) +
+    coord_flip()  
+  ggsave(stats.save.paths$feats.boxplots.2, width = 16, height = 40)
+  # save also the diff features, if enabled
+  if (G.feat.timediffs) {
+    ggplot() +
+      ggtitle("Manually kicked out cells") +
+      theme_bw() +
+      geom_boxplot(data = data.diffs, aes(feature, value)) + 
+      geom_point(data = data.false.diffs, aes(feature, value, size = 2), color = "blue", shape = 3) +
       coord_flip()  
-    ggsave(stats.save.paths$diffs.boxplots, width = 16, height = 40)
+    ggsave(stats.save.paths$diffs.boxplots.2, width = 16, height = 40)
+  }
+  ##########
+  # Nr. 3: highlight quantile thresholds and outlying values in boxplot
+  ########
+  ggplot() + 
+    ggtitle(paste0("Outliers of well segmented cells for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    theme_bw() +
+    geom_boxplot(data = data.true.feats, aes(feature, value)) + 
+    geom_point(data = data.true.outliers.feats.vals, aes(feature, value, size = 2), color = "red", shape = 3) +
+    geom_hline(yintercept = bound.lower, color = 'red', linetype = 'dotted') +
+    geom_hline(yintercept = bound.upper, color = 'red', linetype = 'dotted') +
+    coord_flip()
+  ggsave(stats.save.paths$feats.boxplots.3, width = 16, height = 40)
+  # save also the diff features, if enabled
+  if (G.feat.timediffs) {
+    ggplot() +
+      ggtitle(paste0("Outliers of well segmented cells for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+      theme_bw() +
+      geom_boxplot(data = data.true.diffs, aes(feature, value)) + 
+      geom_point(data = data.true.outliers.diffs.vals, aes(feature, value, size = 2), color = "red", shape = 3) +
+      geom_hline(yintercept = bound.lower, color = 'red', linetype = 'dotted') +
+      geom_hline(yintercept = bound.upper, color = 'red', linetype = 'dotted') +
+      coord_flip()  
+    ggsave(stats.save.paths$diffs.boxplots.3, width = 16, height = 40)
+  }
+  ##########
+  # Nr. 4: visualize all values of selected outliers and connect them per cell
+  ########
+  ggplot() + 
+    ggtitle(paste0("Outliers of well segmented cells for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    theme_bw() +
+    geom_boxplot(data = data.true.feats, aes(feature, value)) + 
+    geom_path(data = data.true.outliers.feats.all, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) +
+    geom_point(data = data.true.outliers.feats.vals, aes(feature, value, size = 2), color = "red", shape = 3) +
+    geom_hline(yintercept = bound.lower, color = 'red', linetype = 'dotted') +
+    geom_hline(yintercept = bound.upper, color = 'red', linetype = 'dotted') +
+    coord_flip()  
+  ggsave(stats.save.paths$feats.boxplots.4, width = 16, height = 40)
+  # save also the diff features, if enabled
+  if (G.feat.timediffs) {
+    ggplot() +
+      ggtitle(paste0("Outliers of well segmented cells for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+      theme_bw() +
+      geom_boxplot(data = data.true.diffs, aes(feature, value)) + 
+      geom_path(data = data.true.outliers.diffs.all, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) + 
+      geom_point(data = data.true.outliers.diffs.vals, aes(feature, value, size = 2), color = "red", shape = 3) +
+      geom_hline(yintercept = bound.lower, color = 'red', linetype = 'dotted') +
+      geom_hline(yintercept = bound.upper, color = 'red', linetype = 'dotted') +
+      coord_flip()  
+    ggsave(stats.save.paths$diffs.boxplots.4, width = 16, height = 40)
   }
   
   #########################
@@ -264,10 +362,10 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
   x <- 0.0001
   y <- 0
   i <- 1
-  while(y < 0.2*nrow(data)) {
-    bound.lower <- quantile(data.melted[,value], x)
-    bound.upper <- quantile(data.melted[,value], 1-x)
-    y <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
+  while(y < 0.2*nrow(data.true)) {
+    bound.lower <- quantile(data.true.melted[,value], x)
+    bound.upper <- quantile(data.true.melted[,value], 1-x)
+    y <- data.true.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
       unique() %>%
       length()
     quantile.data[i,] <- c(x,y)

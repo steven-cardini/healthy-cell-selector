@@ -26,11 +26,8 @@ cv = function (in.vector) {
 }
 
 
-###### cv ###################################################################
-# IN: vector of numeric data
-# OUT: vector of numeric data
-# Calculates the coefficient of variation (CV) from values in a vector,
-# ignoring NA values
+###### hexId #################################################################
+# IN: 
 ##############################################################################
 hexId = function (n) {
   id <- paste0(sample(c(0:9, letters[1:6]), n, replace = TRUE), collapse = '')
@@ -58,7 +55,7 @@ initializeExperiment = function (model.type) {
 # IN: 
 # OUT: 
 ##############################################################################
-saveDatasetInfo = function (data.params, output.file) {
+saveDatasetInfo = function (data.params, cell.numbers, output.file) {
   fileconn <- file(output.file)
   writeLines(c(paste0('Timestamp: ', Sys.time()),
                '--------------------------------',
@@ -71,7 +68,10 @@ saveDatasetInfo = function (data.params, output.file) {
                paste0('Class Attribute: ', data.params$class.attr),
                paste0('Label Outliers: ', data.params$label.outliers),
                paste0('Upper quantile bound: ', data.params$upper.bound),
-               paste0('Lower quantile bound: ', data.params$lower.bound)
+               paste0('Lower quantile bound: ', data.params$lower.bound),
+               paste0('Total number of cells: ', cell.numbers$total),
+               paste0('Manually kicked out (bad segmentation): ', cell.numbers$manual),
+               paste0('Automatically kicked out (quantile thresholds): ', cell.numbers$automatic)
               ),
              fileconn)
   close(fileconn)
