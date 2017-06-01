@@ -66,12 +66,13 @@ saveDatasetInfo = function (data.params, cell.numbers, output.file) {
                paste0('Aggregate functions: ', paste0(G.feat.aggr.fun, collapse = ' / ')),
                paste0('Features were scaled: ', G.feat.scale),
                paste0('Class Attribute: ', data.params$class.attr),
-               paste0('Label Outliers: ', data.params$label.outliers),
+               paste0('Label Outliers Method: ', data.params$label.outliers.method),
+               paste0('Label Outliers only from TRUE cells: ', data.params$label.outliers.onlyTrueCells),
                paste0('Upper quantile bound: ', data.params$upper.bound),
                paste0('Lower quantile bound: ', data.params$lower.bound),
                paste0('Total number of cells: ', cell.numbers$total),
                paste0('Manually kicked out (bad segmentation): ', cell.numbers$manual),
-               paste0('Automatically kicked out (quantile thresholds): ', cell.numbers$automatic)
+               paste0('Automatically kicked out (quantile thresholds): ', cell.numbers$outliers)
               ),
              fileconn)
   close(fileconn)

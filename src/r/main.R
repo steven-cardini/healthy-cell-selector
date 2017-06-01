@@ -27,23 +27,24 @@ require(e1071)
 
 G.feat.timediffs <- TRUE
 G.feat.scale <- TRUE
-G.label.outliers.mode <- 'global'
 G.feat.aggr.fun <- c('var', 'mean', 'min', 'max')
 
 train.data.info <- list(
   file.name = '20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv',
   file.alias = 'dataset.training',
   class.attr = 'mid.in.man',
-  label.outliers = 'global', # global: look at all features together, individual: look at features individually, none: no relabeling
+  label.outliers.method = 'global', # global: look at all features together, individual: look at features individually, none: no relabeling
+  label.outliers.onlyTrueCells = FALSE, # TRUE: consider outliers of TRUE classified cells only, FALSE: consider outliers over all cells
   upper.bound = 0.9996,
-  lower.bound = 0.0004 # kicks out 20 cells, if label.outliers = global and funs = (var, mean, min, max) and timediffs = true
+  lower.bound = 0.0004 # kicks out 20 cells, if label.outliers.method = global and funs = (var, mean, min, max) and timediffs = true
 )
 
 test.data.1.info <- list(
   file.name = '20170228_test_multipulses_30min_break.csv',
   file.alias = 'dataset.test.30min',
   class.attr = 'mid.in',
-  label.outliers = 'none',
+  label.outliers.method = 'none',
+  label.outliers.onlyTrueCells = FALSE,
   upper.bound = NA,
   lower.bound = NA
 )
@@ -52,7 +53,8 @@ test.data.2.info <- list(
   file.name = '20170228_test_multipulses_45min_break.csv',
   file.alias = 'dataset.test.45min',
   class.attr = 'mid.in',
-  label.outliers = 'none',
+  label.outliers.method = 'none',
+  label.outliers.onlyTrueCells = FALSE,
   upper.bound = NA,
   lower.bound = NA
 )
@@ -61,7 +63,8 @@ test.data.3.info <- list(
   file.name = '20170228_test_multipulses_60min_break.csv',
   file.alias = 'dataset.test.60min',
   class.attr = 'mid.in',
-  label.outliers = 'none',
+  label.outliers.method = 'none',
+  label.outliers.onlyTrueCells = FALSE,
   upper.bound = NA,
   lower.bound = NA
 )

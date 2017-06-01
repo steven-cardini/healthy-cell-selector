@@ -92,12 +92,10 @@ getDatasetFilePaths = function (data.params) {
     wilcox.tests = paste0(path.prefix, 'wilcoxon_', data.params$lower.bound, '-', data.params$upper.bound, '.csv'),
     feats.boxplots.1 = paste0(path.prefix, 'boxplots_feats.pdf'),
     diffs.boxplots.1 = paste0(path.prefix, 'boxplots_diffs.pdf'),
-    feats.boxplots.2 = paste0(path.prefix, 'boxplots_feats_manually_excluded_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    diffs.boxplots.2 = paste0(path.prefix, 'boxplots_diffs_manually_excluded_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    feats.boxplots.3 = paste0(path.prefix, 'boxplots_feats_outlier-values_only_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    diffs.boxplots.3 = paste0(path.prefix, 'boxplots_diffs_outlier-values_only_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    feats.boxplots.4 = paste0(path.prefix, 'boxplots_feats_outliers_allvalues_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
-    diffs.boxplots.4 = paste0(path.prefix, 'boxplots_diffs_outliers_allvalues_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    feats.boxplots.2 = paste0(path.prefix, 'boxplots_feats_outlying-values_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots.2 = paste0(path.prefix, 'boxplots_diffs_outlying-values_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    feats.boxplots.3 = paste0(path.prefix, 'boxplots_feats_outlier-cells_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
+    diffs.boxplots.3 = paste0(path.prefix, 'boxplots_diffs_outlier-cells_', data.params$lower.bound, '-', data.params$upper.bound, '.pdf'),
     discarded.stepplot.raw = paste0(path.prefix, 'stepplot_discarded.png'),
     discarded.stepplot.marked = paste0(path.prefix, 'stepplot_discarded_marked.png')
   )
@@ -117,6 +115,140 @@ getExperimentFilePaths = function (data.params) {
              data = paste0(G.experiment.files.path, results.file, '.data.csv')
             )
   return(paths)
+}
+
+
+###### calculateAndSaveDatasetStatistics #####################################
+# IN: 
+# OUT: 
+# 
+##############################################################################
+calculateAndSaveDatasetStatistics = function (data.input, data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths) {
+  
+  # save basic information about the dataset
+  saveDatasetInfo(data.params, cell.numbers, stats.save.paths$params.info)
+  
+  # subdivide melted data into outlier values
+  data.melted.outlyingVals <- data.input.melted[value<bound.val.lower | value>bound.val.upper,]
+  
+  # prepare plot data for plain features
+  ## outlierCells: contains all features of cells that have at least one outlying value
+  ## outlyingVals: contains only the outlying values
+  data.feats.all <- data.input.melted[!(feature %like% "diffs")]
+  data.feats.outlierCells <- data.feats.all[get(G.cellid.arg) %in% ids.outliers]
+  data.feats.outlyingVals <- data.melted.outlyingVals[!(feature %like% "diffs")]
+  
+  # generate and save boxplots of plain features
+  boxplotFeatures(data.feats.all, stats.save.paths$feats.boxplots.1)
+  boxplotFeaturesMarkOutlyingValues(data.feats.all, data.feats.outlyingVals, data.params, bound.val.lower, bound.val.upper, stats.save.paths$feats.boxplots.2)
+  boxplotFeaturesConnectOutlierCells(data.feats.all, data.feats.outlyingVals, data.feats.outlierCells, data.params, bound.val.lower, bound.val.upper, stats.save.paths$feats.boxplots.3)
+  
+  # if time differences were added, do the same for those
+  if (G.feat.timediffs) {
+    data.diffs.all <- data.input.melted[feature %like% "diffs"]
+    data.diffs.outlierCells <- data.diffs.all[get(G.cellid.arg) %in% ids.outliers]
+    data.diffs.outlyingVals <- data.melted.outlyingVals[feature %like% "diffs"]
+    
+    boxplotFeatures(data.diffs.all, stats.save.paths$diffs.boxplots.1)
+    boxplotFeaturesMarkOutlyingValues(data.diffs.all, data.diffs.outlyingVals, data.params, bound.val.lower, bound.val.upper, stats.save.paths$diffs.boxplots.2)
+    boxplotFeaturesConnectOutlierCells(data.diffs.all, data.diffs.outlyingVals, data.diffs.outlierCells, data.params, bound.val.lower, bound.val.upper, stats.save.paths$diffs.boxplots.3)
+  }
+  
+  
+  stepplotQuantileDiscards(data.input, data.input.melted, data.params, bound.val.lower, bound.val.upper, cell.numbers$outliers, stats.save.paths$discarded.stepplot.raw, stats.save.paths$discarded.stepplot.marked)
+  
+}
+
+
+###### boxplotFeatures #####################################
+# IN: 
+# OUT: 
+# boxplot of all features
+##############################################################################
+boxplotFeatures = function (data.melted.all, save.path) {
+  
+  ggplot() + 
+    ggtitle("Boxplot of features over all cells") +
+    theme_bw() +
+    geom_boxplot(data = data.melted.all, aes(feature, value)) + 
+    coord_flip()
+  ggsave(save.path, width = 16, height = 40)
+  
+}
+
+###### boxplotFeaturesMarkOutlyingValues #####################################
+# IN: 
+# OUT: 
+# boxplot of all features
+##############################################################################
+boxplotFeaturesMarkOutlyingValues = function (data.melted.all, data.melted.outlyingVals, data.params, bound.val.lower, bound.val.upper, save.path) {
+  
+  ggplot() + 
+    ggtitle(paste0("Outlying values among features for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    theme_bw() +
+    geom_boxplot(data = data.melted.all, aes(feature, value)) + 
+    geom_point(data = data.melted.outlyingVals, aes(feature, value, size = 2), color = "red", shape = 3) +
+    geom_hline(yintercept = bound.val.lower, color = 'red', linetype = 'dotted') +
+    geom_hline(yintercept = bound.val.upper, color = 'red', linetype = 'dotted') +
+    coord_flip()
+  ggsave(save.path, width = 16, height = 40)
+  
+}
+
+###### boxplotFeaturesConnectOutlierCells #####################################
+# IN: 
+# OUT: 
+# boxplot of all features
+##############################################################################
+boxplotFeaturesConnectOutlierCells = function (data.melted.all, data.melted.outlyingVals, data.melted.outliers, data.params, bound.val.lower, bound.val.upper, save.path) {
+  
+  ggplot() + 
+    ggtitle(paste0("Outlier cells for quantile ", data.params$lower.bound, " - ", data.params$upper.bound)) +
+    theme_bw() +
+    geom_boxplot(data = data.melted.all, aes(feature, value)) + 
+    geom_path(data = data.melted.outliers, aes(feature, value, group = get(G.cellid.arg), alpha = 0.3)) +
+    geom_point(data = data.melted.outlyingVals, aes(feature, value, size = 2), color = "red", shape = 3) +
+    geom_hline(yintercept = bound.val.lower, color = 'red', linetype = 'dotted') +
+    geom_hline(yintercept = bound.val.upper, color = 'red', linetype = 'dotted') +
+    coord_flip()  
+  ggsave(save.path, width = 16, height = 40)
+  
+}
+
+###### stepplotQuantileDiscards #####################################
+# IN: 
+# OUT: 
+# STEP-PLOT DISCARDED CELLS IN FUNCTION OF QUANTILE THRESHOLD
+##############################################################################
+stepplotQuantileDiscards = function (data, data.melted, data.params, bound.val.lower, bound.val.upper, cell.number.outliers, save.path.unmarked, save.path.marked) {
+  
+  # Calculate number of discarded cells for different quantile thresholds
+  quantile.data <- data.frame(x = numeric(), y = numeric())
+  x <- 0.0001
+  y <- 0
+  i <- 1
+  while(y < 0.2*nrow(data)) {
+    bound.lower <- quantile(data.melted[,value], x)
+    bound.upper <- quantile(data.melted[,value], 1-x)
+    y <- data.melted[value<bound.val.lower | value>bound.val.upper, get(G.cellid.arg)] %>%
+      unique() %>%
+      length()
+    quantile.data[i,] <- c(x,y)
+    x <- x + 0.0001
+    i <- i+1
+  }
+  # Save plot
+  ggplot(quantile.data, aes(x,y)) + 
+    theme_bw() + 
+    labs(title = "Number of cells discarded in function of quantile threshold", x = "lower quantile threshold", y = "Number of cells discarded") +
+    labs(subtitle = data.params$file.alias) +
+    geom_step() +
+    ggsave(save.path.unmarked, width = 6, height = 4) +
+    labs(subtitle = paste0(data.params$file.alias, ' / chosen threshold = (', data.params$lower.bound, ', ', cell.number.outliers ,')')) +
+    geom_hline(yintercept = cell.number.outliers, color = 'red', linetype = 'dashed') + 
+    geom_vline(xintercept = data.params$lower.bound, color = 'red', linetype = 'dashed') +
+    ggsave(save.path.marked, width = 6, height = 4)
+  
 }
 
 
@@ -175,7 +307,7 @@ getStatistics = function (in.params, in.conf.matrix, in.file.path) {
                '--------------------------------',
                paste0('Test Dataset: ', in.params$file.name),
                paste0('Class Attribute: ', in.params$class.attr),
-               paste0('Label Outliers: ', in.params$label.outliers),
+               paste0('Label Outliers: ', in.params$label.outliers.method),
                paste0('Upper quantile bound: ', in.params$upper.bound),
                paste0('Lower quantile bound: ', in.params$lower.bound),
                '--------------------------------',
