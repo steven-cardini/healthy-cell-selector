@@ -11,11 +11,15 @@
 # Project Journal
 
 ## 01.06.2017
+19:30 - 20:45
+- Fixed step plot
+- Changed cell_Id attribute such that it is composed of image site and object nr.
+- Dataset evaluation now prints out cell_Ids of outlier cells
+
 13:00 - 18:30
 - Added SVM classifier
 - Discussion with M. Dobrzynski about next steps
 - Refactored method to relabel outliers globally as FALSE
-- TODO: fix step plot
 
 ## 31.05.2017
 16:30 - 18:00
