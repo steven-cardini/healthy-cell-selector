@@ -206,7 +206,7 @@ labelOutliersOverAllFeatures = function (data, data.params, stats.save.paths = N
       manual = length(ids.false),
       outliers = length(ids.outliers)
     )
-    calculateAndSaveDatasetStatistics(data.input, data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths)
+    calculateAndSaveDatasetStatistics(data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths)
   }
     
   # return the dataset where outliers are labelled FALSE

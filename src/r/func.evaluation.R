@@ -123,7 +123,7 @@ getExperimentFilePaths = function (data.params) {
 # OUT: 
 # 
 ##############################################################################
-calculateAndSaveDatasetStatistics = function (data.input, data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths) {
+calculateAndSaveDatasetStatistics = function (data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths) {
   
   # save basic information about the dataset
   saveDatasetInfo(data.params, cell.numbers, stats.save.paths$params.info)
@@ -155,7 +155,7 @@ calculateAndSaveDatasetStatistics = function (data.input, data.input.melted, dat
   }
   
   
-  stepplotQuantileDiscards(data.input, data.input.melted, data.params, bound.val.lower, bound.val.upper, cell.numbers$outliers, stats.save.paths$discarded.stepplot.raw, stats.save.paths$discarded.stepplot.marked)
+  stepplotQuantileDiscards(data.input.melted, data.params, bound.val.lower, bound.val.upper, cell.numbers, stats.save.paths$discarded.stepplot.raw, stats.save.paths$discarded.stepplot.marked)
   
 }
 
@@ -220,17 +220,17 @@ boxplotFeaturesConnectOutlierCells = function (data.melted.all, data.melted.outl
 # OUT: 
 # STEP-PLOT DISCARDED CELLS IN FUNCTION OF QUANTILE THRESHOLD
 ##############################################################################
-stepplotQuantileDiscards = function (data, data.melted, data.params, bound.val.lower, bound.val.upper, cell.number.outliers, save.path.unmarked, save.path.marked) {
+stepplotQuantileDiscards = function (data.melted, data.params, bound.val.lower, bound.val.upper, cell.numbers, save.path.unmarked, save.path.marked) {
   
   # Calculate number of discarded cells for different quantile thresholds
   quantile.data <- data.frame(x = numeric(), y = numeric())
   x <- 0.0001
   y <- 0
   i <- 1
-  while(y < 0.2*nrow(data)) {
+  while(y < 0.2*cell.numbers$total) {
     bound.lower <- quantile(data.melted[,value], x)
     bound.upper <- quantile(data.melted[,value], 1-x)
-    y <- data.melted[value<bound.val.lower | value>bound.val.upper, get(G.cellid.arg)] %>%
+    y <- data.melted[value<bound.lower | value>bound.upper, get(G.cellid.arg)] %>%
       unique() %>%
       length()
     quantile.data[i,] <- c(x,y)
@@ -244,8 +244,8 @@ stepplotQuantileDiscards = function (data, data.melted, data.params, bound.val.l
     labs(subtitle = data.params$file.alias) +
     geom_step() +
     ggsave(save.path.unmarked, width = 6, height = 4) +
-    labs(subtitle = paste0(data.params$file.alias, ' / chosen threshold = (', data.params$lower.bound, ', ', cell.number.outliers ,')')) +
-    geom_hline(yintercept = cell.number.outliers, color = 'red', linetype = 'dashed') + 
+    labs(subtitle = paste0(data.params$file.alias, ' / chosen threshold = (', data.params$lower.bound, ', ', cell.numbers$outliers ,')')) +
+    geom_hline(yintercept = cell.numbers$outliers, color = 'red', linetype = 'dashed') + 
     geom_vline(xintercept = data.params$lower.bound, color = 'red', linetype = 'dashed') +
     ggsave(save.path.marked, width = 6, height = 4)
   
