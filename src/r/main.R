@@ -18,7 +18,8 @@ library(rpart)
 library(rpart.plot)
 # library for Naive Bayes
 require(klaR)
-
+# library for SVM
+require(e1071)
 
 #################################################
 # EXPERIMENT PARAMETERS
@@ -125,7 +126,7 @@ succ.rate.3 <- evaluateModel(dt.model, test.data.3.info)
 
 # Print the mean success rate as info
 succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
-sprintf('Mean Success Rate: %f', succ.rate.mean)
+sprintf('DT - Mean Success Rate: %f', succ.rate.mean)
 
 
 ######################
@@ -152,4 +153,38 @@ succ.rate.3 <- evaluateModel(nb.model, test.data.3.info)
 
 # Print the mean success rate as info
 succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
-sprintf('Mean Success Rate: %f', succ.rate.mean)
+sprintf('NB - Mean Success Rate: %f', succ.rate.mean)
+
+
+######################
+# Support Vector Machines
+######################
+
+initializeExperiment('SVM')
+
+# Create formula from class variable for the SVM
+svm.formula <- as.formula(paste(train.data.info$class.attr, '.', sep=" ~ "))
+
+# Parameters for the SVM
+svm.kernel <- "radial"
+svm.gamma <- 0.1
+svm.cost <- 10
+
+svm.model <- svm(formula = svm.formula, data = data.training, type = "C-classification", kernel = svm.kernel, gamma = svm.gamma, cost = svm.cost)
+
+# Save experiment information
+svm.params.string <- paste0("kernel = ", svm.kernel, ", gamma = ", svm.gamma, ", cost = ", svm.cost)
+saveExperimentInfo(svm.params.string)
+
+# Evaluate decision tree with training dataset
+succ.rate.0 <- evaluateModel(svm.model, train.data.info)
+
+# Evaluate decision tree with test datasets
+succ.rate.1 <- evaluateModel(svm.model, test.data.1.info)
+succ.rate.2 <- evaluateModel(svm.model, test.data.2.info)
+succ.rate.3 <- evaluateModel(svm.model, test.data.3.info)
+
+# Print the mean success rate as info
+succ.rate.mean <- mean(succ.rate.1, succ.rate.2, succ.rate.3)
+sprintf('SVM - Mean Success Rate: %f', succ.rate.mean)
+

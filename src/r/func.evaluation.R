@@ -132,6 +132,8 @@ getPredictedClasses = function(class.model, data.test) {
     class.pred <- class.prob > 0.5 
   } else if (G.experiment.model == "NaiveBayes") {
     class.pred <- class.prob$class
+  } else if (G.experiment.model == "SVM") {
+    return (class.prob)
   } else {
     # Model not known, stop code execution
     stop()
