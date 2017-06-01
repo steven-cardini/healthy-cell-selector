@@ -1,4 +1,4 @@
-Timestamp: 2017-05-24 18:25:45
+Timestamp: 2017-06-01 20:34:50
 --------------------------------
 Dataset: 20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv
 Features included: ^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*
@@ -7,9 +7,11 @@ Time differences as features: TRUE
 Aggregate functions: var / mean / min / max
 Features were scaled: TRUE
 Class Attribute: mid.in.man
-Label Outliers: global
-Upper quantile bound: 0.9996
-Lower quantile bound: 4e-04
+Label Outliers Method: global
+Label Outliers only from TRUE cells: FALSE
+Upper quantile bound: 0.9991
+Lower quantile bound: 9e-04
 Total number of cells: 303
 Manually kicked out (bad segmentation): 31
-Automatically kicked out (quantile thresholds): 20
+Outliers kicked out (quantile thresholds): 21
+Outlier cells: 000_004, 001_001, 001_024, 002_035, 002_041, 003_017, 003_041, 003_045, 003_046, 003_049, 004_038, 005_019, 005_025, 005_032, 005_038, 006_013, 007_003, 007_016, 007_019, 007_042, 007_045

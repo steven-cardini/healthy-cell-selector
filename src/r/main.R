@@ -35,8 +35,8 @@ train.data.info <- list(
   class.attr = 'mid.in.man',
   label.outliers.method = 'global', # global: look at all features together, individual: look at features individually, none: no relabeling
   label.outliers.onlyTrueCells = FALSE, # TRUE: consider outliers of TRUE classified cells only, FALSE: consider outliers over all cells
-  upper.bound = 0.9996,
-  lower.bound = 0.0004 # kicks out 20 cells, if label.outliers.method = global and funs = (var, mean, min, max) and timediffs = true
+  upper.bound = 0.9991,
+  lower.bound = 0.0009
 )
 
 test.data.1.info <- list(
@@ -75,7 +75,8 @@ test.data.3.info <- list(
 #################################################
 
 G.cellid.arg <- 'cell_Id' # custom name for the new cell id attribute
-G.id.args.vec <- c('Image_Metadata_Site', 'objNuc_TrackObjects_Label')
+G.site.arg <- 'Image_Metadata_Site'
+G.objnr.arg <- 'objNuc_TrackObjects_Label'
 G.metadata.args.vec <- c('Stimulation_duration', 'Stimulation_intensity', 'Stimulation_treatment')
 G.timepoint.arg <- 'RealTime'
 

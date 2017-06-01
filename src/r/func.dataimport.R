@@ -70,17 +70,20 @@ importDataFromFile = function (in.file.name, in.class.arg) {
   loc.data <- addCellIds(loc.data)
   
   # Test that all cells contain the same number of time points and save the number of timepoints
-  test <- table(loc.data[,G.cellid.arg])
+  #test <- table(loc.data[,G.cellid.arg])
   #stopifnot(var(test) == 0)
   #stopifnot(mean(test) %% 1 == 0)
-  rm(test)
+  #rm(test)
   
   # Test that there is the identical classification (TRUE | FALSE) for all time points of a cell
-  test <- loc.data %>% 
+  test1 <- loc.data %>% 
     dplyr::select(one_of(c(G.cellid.arg, in.class.arg))) %>% 
     unique()
-  stopifnot(nrow(test) == max(loc.data[,G.cellid.arg]))
-  rm(test)
+  test2 <- loc.data %>%
+    dplyr::select_(G.cellid.arg) %>%
+    unique()
+  stopifnot(nrow(test1) == nrow(test2))
+  rm(test1, test2)
   
   return(loc.data)
   
@@ -96,21 +99,19 @@ importDataFromFile = function (in.file.name, in.class.arg) {
 
 
 ###### addCellIds ############################################################
-# IN: data.frame containing features from a CSV
-# OUT: data.frame identical to input, with additional attribute cell_Id
+# IN: data.frame containing all features from a CSV
+# OUT: data.frame from input, with additional attribute cell_Id, without site and obj nr attributes
 ##############################################################################
 addCellIds = function (in.data) {
+  # add new attribute cell_Id composed of site nr. and object nr.
+  data <- as.data.table(in.data)
+  data[, (G.cellid.arg) := sprintf("%03d_%03d", get(G.site.arg), get(G.objnr.arg))]
+  # remove site nr. and object nr. from dataset
+  data <- data %>%
+    as.data.frame() %>%
+    dplyr::select(-one_of(G.site.arg, G.objnr.arg))
   
-  # add cell IDs to data set
-  data <- in.data %>%
-    dplyr::select(dplyr::one_of(G.id.args.vec)) %>%
-    dplyr::distinct()
-  data[,G.cellid.arg] <- 1:nrow(data)
-  
-  out.data <- data %>%
-    dplyr::inner_join(in.data, by = G.id.args.vec) # now equals input data set plus new row in.cell.id.arg
-  
-  return(out.data)
+  return(data)
 }
 
 

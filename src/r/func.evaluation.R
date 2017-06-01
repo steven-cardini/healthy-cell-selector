@@ -126,7 +126,7 @@ getExperimentFilePaths = function (data.params) {
 calculateAndSaveDatasetStatistics = function (data.input.melted, data.params, bound.val.lower, bound.val.upper, ids.outliers, cell.numbers, stats.save.paths) {
   
   # save basic information about the dataset
-  saveDatasetInfo(data.params, cell.numbers, stats.save.paths$params.info)
+  saveDatasetInfo(data.params, cell.numbers, ids.outliers, stats.save.paths$params.info)
   
   # subdivide melted data into outlier values
   data.melted.outlyingVals <- data.input.melted[value<bound.val.lower | value>bound.val.upper,]
@@ -157,6 +157,35 @@ calculateAndSaveDatasetStatistics = function (data.input.melted, data.params, bo
   
   stepplotQuantileDiscards(data.input.melted, data.params, bound.val.lower, bound.val.upper, cell.numbers, stats.save.paths$discarded.stepplot.raw, stats.save.paths$discarded.stepplot.marked)
   
+}
+
+
+###### saveDatasetInfo ######################################################
+# IN: 
+# OUT: 
+##############################################################################
+saveDatasetInfo = function (data.params, cell.numbers, ids.outliers, output.file) {
+  fileconn <- file(output.file)
+  writeLines(c(paste0('Timestamp: ', Sys.time()),
+               '--------------------------------',
+               paste0('Dataset: ', data.params$file.name),
+               paste0('Features included: ', G.feature.include.regex),
+               paste0('Features excluded: ', G.feature.exclude.regex),
+               paste0('Time differences as features: ', G.feat.timediffs),
+               paste0('Aggregate functions: ', paste0(G.feat.aggr.fun, collapse = ' / ')),
+               paste0('Features were scaled: ', G.feat.scale),
+               paste0('Class Attribute: ', data.params$class.attr),
+               paste0('Label Outliers Method: ', data.params$label.outliers.method),
+               paste0('Label Outliers only from TRUE cells: ', data.params$label.outliers.onlyTrueCells),
+               paste0('Upper quantile bound: ', data.params$upper.bound),
+               paste0('Lower quantile bound: ', data.params$lower.bound),
+               paste0('Total number of cells: ', cell.numbers$total),
+               paste0('Manually kicked out (bad segmentation): ', cell.numbers$manual),
+               paste0('Outliers kicked out (quantile thresholds): ', cell.numbers$outliers),
+               paste0('Outlier cells: ', paste(ids.outliers, collapse = ', '))
+  ),
+  fileconn)
+  close(fileconn)
 }
 
 

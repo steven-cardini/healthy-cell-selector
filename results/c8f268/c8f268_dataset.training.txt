@@ -1,0 +1,15 @@
+Timestamp: 2017-06-01 13:45:30
+--------------------------------
+Test Dataset: 20170117_test_multipulses_100_50_10_2percent_100ms_interval_5_ver2_manual.csv
+Class Attribute: mid.in.man
+Label Outliers: global
+Upper quantile bound: 0.9996
+Lower quantile bound: 4e-04
+--------------------------------
+TP: 252
+TN: 51
+FP: 0
+FN: 0
+TPR: 1
+FPR: 0
+Success Rate: 1

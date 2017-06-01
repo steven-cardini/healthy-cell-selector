@@ -1,0 +1,9 @@
+Timestamp: 2017-06-01 13:45:26
+--------------------------------
+Model: SVM
+Model params: kernel = radial, gamma = 0.1, cost = 10
+Features included: ^objCell_Intensity_MeanIntensity_imErkCorrOrig$|^objNuc_Intensity_MeanIntensity_imNucCorrBg$|^objCell_AreaShape*
+Features excluded: .*(EulerNumber)+.*
+Time differences as features: TRUE
+Aggregate functions: var / mean / min / max
+Features were scaled: TRUE
