@@ -10,11 +10,30 @@
 
 # Project Journal
 
+## 01.06.2017
+13:00 - 18:30
+- Added SVM classifier
+- Discussion with M. Dobrzynski about next steps
+- Refactored method to relabel outliers globally as FALSE
+- TODO: fix step plot
+
+## 31.05.2017
+16:30 - 18:00
+- Preparation of project presentation
+
+## 29.05.2017
+15:30 - 15:50
+- Project Meeting with Prof. B Anrig
+
 ## 24.05.2017
 13:00 - 18:00
 - extended functionality of box plots for dataset evaluation
 - added step plot to visualize the number of discarded cells vs. quantile thresholds
 - changed code such that outliers are chosen only from cells not already kicked out manually
+
+## 19.05.2017
+12:00 - 12:15
+- Project Meeting with Prof. B Anrig
 
 ## 18.05.2017
 14:15 - 18:15
